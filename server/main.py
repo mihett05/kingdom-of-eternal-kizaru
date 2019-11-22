@@ -1,9 +1,27 @@
 import socket
 import asyncio
 import json
+import threading
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import models
+
+
+class Connection:
+    def __init__(self, sock: socket.socket, addr, session):
+        self.conn = sock
+        self.addr = addr
+        self.user = None
+        self.active_char = None
+        self.char_list = []
+        self.session = session()
+
+    async def send_msg(self, msg):
+        await asyncio.get_event_loop().sock_sendall(self.conn, msg.encode("utf-8"))
+
+    def close(self):
+        self.session.close()
+        self.conn.close()
 
 
 class Server:
@@ -12,15 +30,12 @@ class Server:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(self.address)
-        self.socket.listen(100)
-        session = sessionmaker()
-        self.engine = create_engine("sqlite:///db.db", echo=False)
+        self.socket.listen(10)
+        self.socket.setblocking(False)
+        self.engine = create_engine("sqlite:///db.db")
         models.User.metadata.create_all(self.engine)
         models.Char.metadata.create_all(self.engine)
-        session.configure(bind=self.engine)
-
-        self.session = session()
-        self.logged = []
+        self.logged = dict()
 
     async def invalid_pkg(self, conn):
         await self.send_msg(conn, json.dumps({
@@ -32,52 +47,89 @@ class Server:
     async def send_msg(conn: socket.socket, msg: str):
         await asyncio.get_event_loop().sock_sendall(conn, msg.encode("utf-8"))
 
-    async def db_fetch_all(self, query):
-        return await asyncio.get_event_loop().run_in_executor(
-            None, lambda: self.db.cursor().execute(query).fetchall()
-        )
-
-    async def handle_connection(self, conn, addr):
-        data = await asyncio.get_event_loop().sock_recv(conn, 4096)
-        try:
-            request = json.loads(data.decode("utf-8"))
-            if "type" not in request:
-                raise json.JSONDecodeError
-            if request["type"] == "login":
-                if "login" not in request and "password" not in request:
-                    raise json.JSONDecodeError
-                login = request["login"]
-                password = request["password"]
-                res = self.session.query(models.User.id).filter_by(login=login, password=password).first()
-                if res is not None:
-                    if addr not in self.logged:
-                        self.logged.append(addr)
-
-                    await self.send_msg(conn, json.dumps({
-                        "status": "ok",
-                        "data": self.session.query(models.Char.id, models.Char.name, models.Char.lvl,
-                                                   models.Char.rank).filter_by(user_id=res[0]).all()
-                    }))
-                else:
-                    await self.send_msg(conn, json.dumps({
-                        "status": "err",
-                        "desc": "Invalid login or password"
-                    }))
-            elif request["type"] == "logout":
+    async def handle_connection(self, sock, addr):
+        loop = asyncio.get_event_loop()
+        conn = Connection(sock, addr, sessionmaker(bind=self.engine))
+        while True:
+            data = await loop.sock_recv(conn.conn, 4096)
+            if not data:
                 if addr in self.logged:
-                    self.logged.remove(addr)
-        except json.JSONDecodeError:
-            await self.invalid_pkg(conn)
+                    self.logged.pop(addr)
+                conn.close()
+                break
+            try:
+                request = json.loads(data.decode("utf-8"))
+                if "type" not in request:
+                    raise json.JSONDecodeError
+                if request["type"] == "login":
+                    if "login" not in request and "password" not in request:
+                        raise json.JSONDecodeError
+                    login = request["login"]
+                    password = request["password"]
+                    user = conn.session.query(models.User).filter_by(login=login, password=password).first()
+                    if user.id is not None:
+                        if addr not in self.logged:
+                            self.logged[addr] = conn
+                        else:
+                            self.logged[addr].close()
+                            self.logged[addr] = conn
+                        chars = conn.session.query(
+                            models.Char.id, models.Char.name,
+                            models.Char.lvl, models.Char.rank
+                        ).filter_by(user_id=user.id).all()
+                        conn.char_list = chars.copy()
+                        await conn.send_msg(json.dumps({
+                            "status": "ok",
+                            "data": chars
+                        }))
+                    else:
+                        await conn.send_msg(json.dumps({
+                            "status": "err",
+                            "desc": "Invalid login or password"
+                        }))
+                elif request["type"] == "logout":
+                    if addr in self.logged:
+                        self.logged.pop(addr).close()
+                elif request["type"] == "play":
+                    if addr in self.logged:
+                        if "char_id" not in request:
+                            raise json.JSONDecodeError
+                        if len(list(filter(lambda x: int(x[0]) == int(request["char_id"]), conn.char_list))) == 1:
+                            conn.active_char = conn.session.query(models.Char).filter_by(id=int(request["char_id"]))
+                            await conn.send_msg(json.dumps({
+                                "status": "ok"
+                            }))
+                        else:
+                            await conn.send_msg(json.dumps({
+                                "status": "err",
+                                "desc": "This is char was removed or hasn't created"
+                            }))
+                    else:
+                        await conn.send_msg(json.dumps({
+                            "status": "err",
+                            "desc": "There wasn't login to account"
+                        }))
+                else:
+                    await conn.send_msg(json.dumps({
+                        "status": "err",
+                        "desc": "Unknown type"
+                    }))
+            except json.JSONDecodeError:
+                await self.invalid_pkg(conn.conn)
 
-        conn.close()
+    async def _run_connection_thread(self, conn, addr):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.handle_connection(conn, addr))
 
     async def _start(self):
         while True:
             conn, addr = await asyncio.get_event_loop().sock_accept(self.socket)
-            await asyncio.create_task(self.handle_connection(conn, addr))
+            threading.Thread(target=self._run_connection_thread, args=(conn, addr)).start()
 
     def start(self):
-        asyncio.get_event_loop().run_until_complete(self._start())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._start())
 
 
 s = Server()
