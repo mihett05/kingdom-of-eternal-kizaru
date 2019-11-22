@@ -22,6 +22,22 @@ class Connection:
     def close(self):
         self.session.close()
         self.conn.close()
+        
+    def get_user(self, login, password):
+        if self.user is None:
+            self.user = self.session.query(models.User).filter_by(login=login, password=password).first()
+        return self.user
+
+    def get_chars(self):
+        if self.user is not None:
+            if len(self.char_list) == 0:
+                res = self.session.query(
+                    models.Char.id, models.Char.name,
+                    models.Char.lvl, models.Char.rank
+                ).filter_by(user_id=self.user.id).all()
+                if len(res) > 0:
+                    self.char_list = res.copy()
+        return self.char_list
 
 
 class Server:
@@ -64,23 +80,13 @@ class Server:
                 if request["type"] == "login":
                     if "login" not in request and "password" not in request:
                         raise json.JSONDecodeError
-                    login = request["login"]
-                    password = request["password"]
-                    user = conn.session.query(models.User).filter_by(login=login, password=password).first()
-                    if user.id is not None:
-                        if addr not in self.logged:
-                            self.logged[addr] = conn
-                        else:
+                    if conn.get_user(request["login"], request["password"]).id is not None:
+                        if addr in self.logged:
                             self.logged[addr].close()
-                            self.logged[addr] = conn
-                        chars = conn.session.query(
-                            models.Char.id, models.Char.name,
-                            models.Char.lvl, models.Char.rank
-                        ).filter_by(user_id=user.id).all()
-                        conn.char_list = chars.copy()
+                        self.logged[addr] = conn
                         await conn.send_msg(json.dumps({
                             "status": "ok",
-                            "data": chars
+                            "data": conn.get_chars()
                         }))
                     else:
                         await conn.send_msg(json.dumps({
