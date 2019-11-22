@@ -36,6 +36,7 @@ class Server:
         models.User.metadata.create_all(self.engine)
         models.Char.metadata.create_all(self.engine)
         self.logged = dict()
+        self.loop = None
 
     async def invalid_pkg(self, conn):
         await self.send_msg(conn, json.dumps({
@@ -48,10 +49,9 @@ class Server:
         await asyncio.get_event_loop().sock_sendall(conn, msg.encode("utf-8"))
 
     async def handle_connection(self, sock, addr):
-        loop = asyncio.get_event_loop()
         conn = Connection(sock, addr, sessionmaker(bind=self.engine))
         while True:
-            data = await loop.sock_recv(conn.conn, 4096)
+            data = await self.loop.sock_recv(conn.conn, 4096)
             if not data:
                 if addr in self.logged:
                     self.logged.pop(addr)
@@ -94,8 +94,9 @@ class Server:
                     if addr in self.logged:
                         if "char_id" not in request:
                             raise json.JSONDecodeError
-                        if len(list(filter(lambda x: int(x[0]) == int(request["char_id"]), conn.char_list))) == 1:
-                            conn.active_char = conn.session.query(models.Char).filter_by(id=int(request["char_id"]))
+                        char = list(filter(lambda x: int(x[0]) == int(request["char_id"]), conn.char_list))
+                        if len(char) == 1:
+                            conn.active_char = char[0]
                             await conn.send_msg(json.dumps({
                                 "status": "ok"
                             }))
@@ -117,19 +118,14 @@ class Server:
             except json.JSONDecodeError:
                 await self.invalid_pkg(conn.conn)
 
-    async def _run_connection_thread(self, conn, addr):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.handle_connection(conn, addr))
-
     async def _start(self):
         while True:
-            conn, addr = await asyncio.get_event_loop().sock_accept(self.socket)
-            threading.Thread(target=self._run_connection_thread, args=(conn, addr)).start()
+            conn, addr = await self.loop.sock_accept(self.socket)
+            asyncio.run_coroutine_threadsafe(self.handle_connection(conn, addr), self.loop)
 
     def start(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._start())
+        self.loop = asyncio.get_event_loop()
+        self.loop.run_until_complete(self._start())
 
 
 s = Server()
