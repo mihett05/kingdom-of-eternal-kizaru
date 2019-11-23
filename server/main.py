@@ -19,6 +19,12 @@ class Connection:
     async def send_msg(self, msg):
         await asyncio.get_event_loop().sock_sendall(self.conn, msg.encode("utf-8"))
 
+    async def send_err(self, desc: str):
+        await self.send_msg(json.dumps({
+            "status": "err",
+            "desc": desc
+        }))
+
     def close(self):
         self.session.close()
         self.conn.close()
@@ -39,6 +45,29 @@ class Connection:
                     self.char_list = res.copy()
         return self.char_list
 
+    async def login(self, request, logged: dict):
+        if self.get_user(request["login"], request["password"]).id is not None:
+            if self.addr in logged:
+                logged[self.addr].close()
+            logged[self.addr] = self
+            await self.send_msg(json.dumps({
+                "status": "ok",
+                "data": self.get_chars()
+            }))
+        else:
+            await self.send_err("Invalid login or password")
+
+    async def play(self, request, is_logged):
+        if is_logged:
+            char = list(filter(lambda x: int(x[0]) == int(request["char_id"]), self.char_list))
+            if len(char) == 1:
+                self.active_char = char[0]
+                await self.send_msg(json.dumps({"status": "ok"}))
+            else:
+                await self.send_err("This is char was removed or hasn't created")
+        else:
+            await self.send_err("There wasn't login to account")
+
 
 class Server:
     def __init__(self, host="localhost", port=48880):
@@ -53,12 +82,6 @@ class Server:
         models.Char.metadata.create_all(self.engine)
         self.logged = dict()
         self.loop = None
-
-    async def invalid_pkg(self, conn):
-        await self.send_msg(conn, json.dumps({
-            "status": "error",
-            "desc": "Invalid package"
-        }))
 
     @staticmethod
     async def send_msg(conn: socket.socket, msg: str):
@@ -80,49 +103,20 @@ class Server:
                 if request["type"] == "login":
                     if "login" not in request and "password" not in request:
                         raise json.JSONDecodeError
-                    if conn.get_user(request["login"], request["password"]).id is not None:
-                        if addr in self.logged:
-                            self.logged[addr].close()
-                        self.logged[addr] = conn
-                        await conn.send_msg(json.dumps({
-                            "status": "ok",
-                            "data": conn.get_chars()
-                        }))
-                    else:
-                        await conn.send_msg(json.dumps({
-                            "status": "err",
-                            "desc": "Invalid login or password"
-                        }))
+                    await conn.login(request, self.logged)
+
                 elif request["type"] == "logout":
                     if addr in self.logged:
                         self.logged.pop(addr).close()
+
                 elif request["type"] == "play":
-                    if addr in self.logged:
-                        if "char_id" not in request:
-                            raise json.JSONDecodeError
-                        char = list(filter(lambda x: int(x[0]) == int(request["char_id"]), conn.char_list))
-                        if len(char) == 1:
-                            conn.active_char = char[0]
-                            await conn.send_msg(json.dumps({
-                                "status": "ok"
-                            }))
-                        else:
-                            await conn.send_msg(json.dumps({
-                                "status": "err",
-                                "desc": "This is char was removed or hasn't created"
-                            }))
-                    else:
-                        await conn.send_msg(json.dumps({
-                            "status": "err",
-                            "desc": "There wasn't login to account"
-                        }))
+                    if "char_id" not in request:
+                        raise json.JSONDecodeError
+                    await conn.play(request, conn.addr in self.logged)
                 else:
-                    await conn.send_msg(json.dumps({
-                        "status": "err",
-                        "desc": "Unknown type"
-                    }))
+                    await conn.send_err("Unknown type")
             except json.JSONDecodeError:
-                await self.invalid_pkg(conn.conn)
+                await conn.send_err("Invalid package")
 
     async def _start(self):
         while True:
