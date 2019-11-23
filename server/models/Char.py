@@ -12,6 +12,7 @@ class Char(Base):
     lvl = Column(Integer, nullable=False, default=1)
     rank = Column(Integer, nullable=False, default=1)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    balance = Column(Integer, default=0)
 
     def __init__(self, name, lvl, rank, user_id):
         self.name = name
