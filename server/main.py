@@ -83,10 +83,6 @@ class Server:
         self.logged = dict()
         self.loop = None
 
-    @staticmethod
-    async def send_msg(conn: socket.socket, msg: str):
-        await asyncio.get_event_loop().sock_sendall(conn, msg.encode("utf-8"))
-
     async def handle_connection(self, sock, addr):
         conn = Connection(sock, addr, sessionmaker(bind=self.engine))
         while True:
