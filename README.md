@@ -1,5 +1,8 @@
 # remains-of-skyrim
-# Style:
+
+### Pull requests только я одобряю, и merge на master тоже
+
+## Style:
 - отступ - 4 пробела
 - под каждый класс отдельный файл
 - ООП стиль!!!
