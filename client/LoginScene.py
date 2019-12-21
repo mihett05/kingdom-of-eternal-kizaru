@@ -3,13 +3,14 @@ import pygame_gui
 
 
 class LoginScene:
-    def __init__(self, screen, state, ui, load_image, api):
+    def __init__(self, screen, state, ui, load_image, api, loader):
         self.screen = screen
         self.size = (self.screen.get_width(), self.screen.get_height())
         self.ui = ui
         self.state = state
         self.load_image = load_image
         self.api = api
+        self.loader = loader
         self.login, self.password, self.login_button, self.status = None, None, None, None
         self.init_ui()
 
@@ -20,9 +21,16 @@ class LoginScene:
                 self.state["login"] = self.login.text
                 self.state["password"] = self.api.hash_password(self.password.text)
             else:
-                self.status.set_text("Ошибка: Неправильный логин или пароль")
+                self.set_result("Ошибка: Неправильный логин или пароль")
 
     def init_ui(self):
+        bg = pygame.sprite.Sprite()
+        bg.image = pygame.transform.scale(self.load_image("bg.png"), self.size)
+        bg.rect = bg.image.get_rect()
+        bg.rect.x = 0
+        bg.rect.y = 0
+        self.loader.add_static(bg)
+
         self.status = None
         pygame_gui.elements.UILabel(text="Логин",
                                     relative_rect=pygame.Rect(self.size[0] / 2 - 50, self.size[1] / 2 - 20, 100, 20),
@@ -46,9 +54,10 @@ class LoginScene:
         else:
             self.status = pygame_gui.elements.UILabel(
                 text="",
-                relative_rect=pygame.Rect(self.size[0] / 2 - 50, self.size[1] / 2 - 60, 100, 20),
+                relative_rect=pygame.Rect(0, self.size[1] / 2 - 60, 1920, 20),
                 manager=self.ui
             )
+            self.status.set_text(text)
 
     def process_events(self, event):
         if event.type == pygame.USEREVENT:

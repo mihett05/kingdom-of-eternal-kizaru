@@ -17,13 +17,14 @@ class Connection:
     async def response(self, response_type, data=None, is_ok=True):
         if data is None:
             data = {}
-        await self.send_msg(json.loads({
+        await self.send_msg(json.dumps({
             "type": response_type,
             "status": "ok" if is_ok else "err",
             **data
         }))
 
     async def send_msg(self, msg):
+        print(msg)
         await self.loop.sock_sendall(self.conn, msg.encode("utf-8"))
 
     async def send_err(self, response_type, desc: str):
@@ -50,12 +51,15 @@ class Connection:
         return self.char_list
 
     async def login(self, request, logged: dict):
-        if self.get_user(request["login"], request["password"]).id is not None:
+        user = self.get_user(request["login"], request["password"])
+        if user is not None and user.id is not None:
             if self.addr in logged:
                 logged[self.addr].close()
             logged[self.addr] = self
             await self.response("login", {
-                "data": self.get_chars()
+                "data": {
+                    "chars": self.get_chars()
+                }
             })
         else:
             await self.send_err("login", "Invalid login or password")

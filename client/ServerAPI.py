@@ -22,15 +22,19 @@ class ServerAPI:
 
     def _receive_thread(self):
         while True:
-            data = json.loads(self.socket.recv(4096).decode("utf-8"))
-            response_type = data["type"]
+            data = self.socket.recv(4096)
+            print(data)
+            request = json.loads(data.decode("utf-8"))
+            response_type = request["type"]
             if response_type in self._listeners:
                 for callback in self._listeners[response_type]:
-                    callback(data)
+                    callback(request)
 
     def _broadcast_thread(self):
         while True:
-            for request in self._requests_queue:
+            if len(self._requests_queue) > 0:
+                request = self._requests_queue.pop(0)
+                print("from client" + str(request))
                 self.socket.send(request.encode("utf-8"))
 
     def on(self, resp_type):

@@ -37,6 +37,7 @@ class Server:
                 break
             try:
                 request = json.loads(data.decode("utf-8"))
+                print(request)
                 if "type" not in request:
                     raise json.JSONDecodeError
                 if request["type"] == "login":
@@ -60,6 +61,7 @@ class Server:
     async def _start(self):
         while True:
             conn, addr = await self.loop.sock_accept(self.socket)
+            print("New con: " + str(addr))
             asyncio.run_coroutine_threadsafe(self.handle_connection(conn, addr), self.loop)
 
     def start(self):
