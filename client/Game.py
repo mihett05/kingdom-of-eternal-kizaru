@@ -1,13 +1,18 @@
 import os
 import pygame
 import pygame_gui
+import threading
 from LoginScene import LoginScene
+from ServerAPI import ServerAPI
 
 
 class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        with open("server.txt", "r") as f:
+            text = f.read()
+        self.api = ServerAPI(text.split(":")[0], int(text.split(":")[1]))
         self.ui = pygame_gui.UIManager((self.screen.get_width(), self.screen.get_height()))
         self.clock = pygame.time.Clock()
         self.state = {
@@ -28,8 +33,11 @@ class Game:
         pygame.display.flip()
 
     def run(self):
+        self.api.connect()
+        threading.Thread(target=self.api._broadcast_thread).start()
+        threading.Thread(target=self.api._receive_thread).start()
         run = True
-        login_scene = LoginScene(self.screen, self.state, self.ui, self.load_image)
+        login_scene = LoginScene(self.screen, self.state, self.ui, self.load_image, self.api)
         while run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -40,4 +48,6 @@ class Game:
             self.ui.update(self.clock.tick() / 1000)
             self.draw()
         pygame.quit()
+        self.api.logout()
+        self.api.close()
 

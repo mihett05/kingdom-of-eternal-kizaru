@@ -1,6 +1,7 @@
 import json
 import socket
 import hashlib
+import threading
 
 
 class ServerAPI:
@@ -23,8 +24,9 @@ class ServerAPI:
         while True:
             data = json.loads(self.socket.recv(4096).decode("utf-8"))
             response_type = data["type"]
-            for callback in self._listeners:
-                callback(response_type)
+            if response_type in self._listeners:
+                for callback in self._listeners[response_type]:
+                    callback(data)
 
     def _broadcast_thread(self):
         while True:
