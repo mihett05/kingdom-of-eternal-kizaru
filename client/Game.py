@@ -5,6 +5,7 @@ import threading
 from LoginScene import LoginScene
 from ServerAPI import ServerAPI
 from Loader import Loader
+from AppData import AppData
 
 
 class Game:
@@ -37,8 +38,8 @@ class Game:
 
     def run(self):
         self.api.connect()
-        threading.Thread(target=self.api._receive_thread).start()
-        threading.Thread(target=self.api._broadcast_thread).start()
+        threading.Thread(target=self.api.receive_thread).start()
+        threading.Thread(target=self.api.broadcast_thread).start()
         run = True
         login_scene = LoginScene(self.screen, self.state, self.ui, self.load_image, self.api, self.loader)
         while run:

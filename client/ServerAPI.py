@@ -1,10 +1,16 @@
 import json
 import socket
 import hashlib
-import threading
 
 
 class ServerAPI:
+    _instance = None  # Singleton
+
+    def __new__(cls, *args, **kwargs):
+        if ServerAPI._instance is None:
+            ServerAPI._instance = super(ServerAPI, cls).__new__(cls, *args, **kwargs)
+        return ServerAPI._instance
+
     def __init__(self, ip, port=48880):
         self.ip = ip
         self.port = port
@@ -20,7 +26,7 @@ class ServerAPI:
     def close(self):
         self.socket.close()
 
-    def _receive_thread(self):
+    def receive_thread(self):
         while True:
             data = self.socket.recv(4096)
             print(data)
@@ -30,7 +36,7 @@ class ServerAPI:
                 for callback in self._listeners[response_type]:
                     callback(request)
 
-    def _broadcast_thread(self):
+    def broadcast_thread(self):
         while True:
             if len(self._requests_queue) > 0:
                 request = self._requests_queue.pop(0)
