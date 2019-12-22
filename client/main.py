@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     def hook(extype, value, traceback):
         print(extype, value, traceback)
-        sys._excepthook(extype, value, traceback)
+        ex_hook(extype, value, traceback)
         sys.exit(1)
 
     sys.excepthook = hook

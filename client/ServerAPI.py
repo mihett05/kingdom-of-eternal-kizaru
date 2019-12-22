@@ -4,13 +4,6 @@ import hashlib
 
 
 class ServerAPI:
-    _instance = None  # Singleton
-
-    def __new__(cls, *args, **kwargs):
-        if ServerAPI._instance is None:
-            ServerAPI._instance = super(ServerAPI, cls).__new__(cls, *args, **kwargs)
-        return ServerAPI._instance
-
     def __init__(self, ip, port=48880):
         self.ip = ip
         self.port = port
@@ -29,18 +22,19 @@ class ServerAPI:
     def receive_thread(self):
         while True:
             data = self.socket.recv(4096)
-            print(data)
-            request = json.loads(data.decode("utf-8"))
-            response_type = request["type"]
-            if response_type in self._listeners:
-                for callback in self._listeners[response_type]:
-                    callback(request)
+            try:
+                response = json.loads(data.decode("utf-8"))
+                response_type = response["type"]
+                if response_type in self._listeners:
+                    for callback in self._listeners[response_type]:
+                        callback(response)
+            except json.JSONDecodeError:
+                pass
 
     def broadcast_thread(self):
         while True:
             if len(self._requests_queue) > 0:
                 request = self._requests_queue.pop(0)
-                print("from client" + str(request))
                 self.socket.send(request.encode("utf-8"))
 
     def on(self, resp_type):

@@ -1,25 +1,30 @@
 import pygame
 import pygame_gui
+from AppData import AppData
 
 
 class LoginScene:
-    def __init__(self, screen, state, ui, load_image, api, loader):
-        self.screen = screen
+    def __init__(self):
+        self.data = AppData()
+        self.screen = self.data.screen()
         self.size = (self.screen.get_width(), self.screen.get_height())
-        self.ui = ui
-        self.state = state
-        self.load_image = load_image
-        self.api = api
-        self.loader = loader
+        self.ui = self.data.ui()
+        self.load_image = self.data.load_image()
+        self.api = self.data.api()
+        self.loader = self.data.loader()
+        self.account = self.data.state()["account"]
+        self.scene = self.data.scene()
+
         self.login, self.password, self.login_button, self.status = None, None, None, None
         self.init_ui()
 
-        @api.on("login")
+        @self.api.on("login")
         def login(data):
             nonlocal self
             if data["status"] == "ok":
-                self.state["login"] = self.login.text
-                self.state["password"] = self.api.hash_password(self.password.text)
+                self.account["login"] = self.login.text
+                self.account["password"] = self.api.hash_password(self.password.text)
+                print(data["data"])
             else:
                 self.set_result("Ошибка: Неправильный логин или пароль")
 
@@ -64,7 +69,4 @@ class LoginScene:
             if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.login_button:
                     self.api.login(self.login.text, self.api.hash_password(self.password.text))
-
-    def get(self):
-        return self.state
 

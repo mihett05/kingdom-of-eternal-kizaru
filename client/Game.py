@@ -6,21 +6,40 @@ from LoginScene import LoginScene
 from ServerAPI import ServerAPI
 from Loader import Loader
 from AppData import AppData
+from Scene import Scene
 
 
 class Game:
     def __init__(self):
         pygame.init()
+        self.data = AppData()
+
+        self.data.set("load_image", self.load_image)
+        self.data.set("account", dict())
+        self.data.set("state", {
+            "account": dict(),
+
+        })
+
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.data.set("screen", self.screen)
+
         with open("server.txt", "r") as f:
             text = f.read()
+
         self.loader = Loader(self.screen)
+        self.data.set("loader", self.loader)
+
         self.api = ServerAPI(text.split(":")[0], int(text.split(":")[1]))
+        self.data.set("api", self.api)
+
         self.ui = pygame_gui.UIManager((self.screen.get_width(), self.screen.get_height()))
+        self.data.set("ui", self.ui)
+
         self.clock = pygame.time.Clock()
-        self.state = {
-            "scene": "login"
-        }
+
+        self.scene = Scene()
+        self.data.set("scene", self.scene)
 
     @staticmethod
     def load_image(name):
@@ -41,13 +60,12 @@ class Game:
         threading.Thread(target=self.api.receive_thread).start()
         threading.Thread(target=self.api.broadcast_thread).start()
         run = True
-        login_scene = LoginScene(self.screen, self.state, self.ui, self.load_image, self.api, self.loader)
+        self.scene.change("login", LoginScene)
         while run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
-                if self.state["scene"] == "login":
-                    login_scene.process_events(event)
+                self.scene.scene.process_events(event)
                 self.ui.process_events(event)
             self.ui.update(self.clock.tick() / 1000)
             self.draw()

@@ -6,23 +6,20 @@ class AppData:
             AppData._instance = super(AppData, cls).__new__(cls, *args, **kwargs)
         return AppData._instance
 
-    def __init__(self, state: dict):
-        self._state = state
+    def __init__(self, state: dict = None):
+        if state is None:
+            state = dict()
+        try:
+            self.__getattribute__("_state")
+        except AttributeError:
+            self._state = state
 
     def get_state(self):
         return self._state
 
-    def set(self, key, value, is_main=False):
-        """
-        is_main
-            if false
-                can get by AppData.state.<key>
-            elif true
-                can get by AppData.<key>
-        """
+    def set(self, key, value):
         self._state[key] = value
-        if key not in self._state:
-            self.__setattr__(("" if is_main else "state.") + key, lambda: self._state[key])
+        self.__setattr__(key, lambda: self.get(key))
 
     def get(self, key):
         return self._state[key]
