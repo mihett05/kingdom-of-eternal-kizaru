@@ -59,13 +59,16 @@ class Server:
                         if adr in self.logged:
                             self.logged.pop(adr).close()
 
+                    elif request["type"] == "register":
+                        self.validate(request, ["login", "password"])
+                        await conn.register(request)
+
                     elif request["type"] == "play":
                         self.validate(request, ["char_id"])
                         await conn.play(request, conn.adr in self.logged)
 
-                    elif request["type"] == "register":
-                        self.validate(request, ["login", "password"])
-                        await conn.register(request)
+                    elif request["type"] == "create_char":
+                        self.validate(request, ["name", "race", "class_name"])
 
                     else:
                         await conn.send_err("request", "Unknown type")
