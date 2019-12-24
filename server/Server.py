@@ -69,6 +69,7 @@ class Server:
 
                     elif request["type"] == "create_char":
                         self.validate(request, ["name", "race", "class_name"])
+                        await conn.create_char(request, self.logged)
 
                     else:
                         await conn.send_err("request", "Unknown type")
