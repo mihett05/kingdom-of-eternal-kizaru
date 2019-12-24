@@ -10,17 +10,22 @@ class AppData:
         if state is None:
             state = dict()
         try:
-            self.__getattribute__("_state")
+            self.__getattribute__("state")
         except AttributeError:
-            self._state = state
+            self.state = state
 
     def get_state(self):
-        return self._state
+        return self.state
 
     def set(self, key, value):
-        self._state[key] = value
-        self.__setattr__(key, lambda: self.get(key))
+        self.state[key] = value
 
     def get(self, key):
-        return self._state[key]
+        return self.state[key]
+
+    def __getitem__(self, item):
+        return self.state[item]
+
+    def __setitem__(self, key, value):
+        self.state[key] = value
 

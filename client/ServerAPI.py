@@ -7,6 +7,7 @@ class ServerAPI:
     def __init__(self, ip, port=48880):
         self.ip = ip
         self.port = port
+        self.connected = False
         self._listeners = {}
         self._requests_queue = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,12 +16,14 @@ class ServerAPI:
 
     def connect(self):
         self.socket.connect((self.ip, self.port))
+        self.connected = True
 
     def close(self):
+        self.connected = False
         self.socket.close()
 
     def receive_thread(self):
-        while True:
+        while self.connected:
             data = self.socket.recv(4096)
             try:
                 response = json.loads(data.decode("utf-8"))
@@ -32,7 +35,7 @@ class ServerAPI:
                 pass
 
     def broadcast_thread(self):
-        while True:
+        while self.connected:
             if len(self._requests_queue) > 0:
                 request = self._requests_queue.pop(0)
                 self.socket.send(request.encode("utf-8"))

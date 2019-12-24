@@ -1,29 +1,36 @@
-from AppData import AppData
+import pygame
+import pygame_gui
+from client.AppData import AppData
 
 
 class Scene:
-    _instance = None  # Singleton
-
-    def __new__(cls):
-        if Scene._instance is None:
-            Scene._instance = super(Scene, cls).__new__(cls)
-        return Scene._instance
-
     def __init__(self):
-        try:
-            self.__getattribute__("name")
-        except AttributeError:
-            self.name = None
-            self.proto = None
-            self.data = AppData()
-            self.ui = self.data.ui()
-            self.queue = []
-            self.scene = None
+        self.data = AppData()
+        self.screen = self.data["screen"]
+        self.size = (self.screen.get_width(), self.screen.get_height())
+        self.ui = self.data["ui"]
+        self.load_image = self.data["load_image"]
+        self.api = self.data["api"]
+        self.loader = self.data["loader"]
+        self.account = self.data["account"]
+        self.scene_manager = self.data["scene"]
+        self.elements = list()
 
-    def change(self, name, proto):
-        self.name = name
-        self.proto = proto
-        self.ui.clear_and_reset()
-        self.scene = proto()
+    def new_element(self, element):
+        self.elements.append(element)
+        return element
+
+    def draw(self):
+        pass
+
+    def clear(self):
+        for elem in self.elements:
+            if elem.__getattribute__("kill"):
+                elem.kill()
+
+    def process_events(self, event):
+        pass
+
+
 
 
