@@ -1,18 +1,23 @@
 import json
 import socket
 import asyncio
+import hashlib
 import server.models as models
 
 
 class Connection:
-    def __init__(self, sock: socket.socket, addr, loop: asyncio.AbstractEventLoop, session):
+    def __init__(self, sock: socket.socket, adr, loop: asyncio.AbstractEventLoop, session):
         self.conn = sock
-        self.addr = addr
+        self.adr = adr
         self.loop = loop
         self.user = None
         self.active_char = None
         self.char_list = []
         self.session = session()
+
+    @staticmethod
+    def hash_password(password):
+        return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
     async def response(self, response_type, data=None, is_ok=True):
         if data is None:
@@ -24,7 +29,6 @@ class Connection:
         }))
 
     async def send_msg(self, msg):
-        print(msg)
         await self.loop.sock_sendall(self.conn, msg.encode("utf-8"))
 
     async def send_err(self, response_type, desc: str):
@@ -53,9 +57,9 @@ class Connection:
     async def login(self, request, logged: dict):
         user = self.get_user(request["login"], request["password"])
         if user is not None and user.id is not None:
-            if self.addr in logged:
-                logged[self.addr].close()
-            logged[self.addr] = self
+            if self.adr in logged:
+                logged[self.adr].close()
+            logged[self.adr] = self
             await self.response("login", {
                 "data": {
                     "chars": self.get_chars()
@@ -74,3 +78,11 @@ class Connection:
                 await self.send_err("play", "This is char was removed or hasn't created")
         else:
             await self.send_err("play", "There wasn't login to account")
+
+    async def register(self, request):
+        if self.session.query(models.User).filter_by(login=request["login"]).first() is None:
+            self.session.add(models.User(login=request["login"], password=self.hash_password(request["password"])))
+            self.session.commit()
+            await self.response("register")
+        else:
+            await self.send_err("register", "Login is not available")

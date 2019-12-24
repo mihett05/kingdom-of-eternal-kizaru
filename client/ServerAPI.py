@@ -81,3 +81,9 @@ class ServerAPI:
             "char_id": char_id
         })
 
+    def register(self, login, password):
+        self.request("register", {
+            "login": login,
+            "password": password
+        })
+
