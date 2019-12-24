@@ -3,8 +3,8 @@ import asyncio
 import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import models
-from Connection import Connection
+import server.models as models
+from server.Connection import Connection
 
 
 class Server:

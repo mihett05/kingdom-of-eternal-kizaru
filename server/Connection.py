@@ -1,7 +1,7 @@
 import json
 import socket
 import asyncio
-import models
+import server.models as models
 
 
 class Connection:
