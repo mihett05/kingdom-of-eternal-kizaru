@@ -1,13 +1,13 @@
 import json
 import socket
 import hashlib
-import threading
 
 
 class ServerAPI:
     def __init__(self, ip, port=48880):
         self.ip = ip
         self.port = port
+        self.connected = False
         self._listeners = {}
         self._requests_queue = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -16,25 +16,28 @@ class ServerAPI:
 
     def connect(self):
         self.socket.connect((self.ip, self.port))
+        self.connected = True
 
     def close(self):
+        self.connected = False
         self.socket.close()
 
-    def _receive_thread(self):
-        while True:
+    def receive_thread(self):
+        while self.connected:
             data = self.socket.recv(4096)
-            print(data)
-            request = json.loads(data.decode("utf-8"))
-            response_type = request["type"]
-            if response_type in self._listeners:
-                for callback in self._listeners[response_type]:
-                    callback(request)
+            try:
+                response = json.loads(data.decode("utf-8"))
+                response_type = response["type"]
+                if response_type in self._listeners:
+                    for callback in self._listeners[response_type]:
+                        callback(response)
+            except json.JSONDecodeError:
+                pass
 
-    def _broadcast_thread(self):
-        while True:
+    def broadcast_thread(self):
+        while self.connected:
             if len(self._requests_queue) > 0:
                 request = self._requests_queue.pop(0)
-                print("from client" + str(request))
                 self.socket.send(request.encode("utf-8"))
 
     def on(self, resp_type):
