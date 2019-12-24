@@ -77,7 +77,7 @@ class Connection:
             else:
                 await self.send_err("play", "This is char was removed or hasn't created")
         else:
-            await self.send_err("play", "There wasn't login to account")
+            await self.send_err("play", "You didn't login in account")
 
     async def register(self, request):
         if self.session.query(models.User).filter_by(login=request["login"]).first() is None:
@@ -86,3 +86,25 @@ class Connection:
             await self.response("register")
         else:
             await self.send_err("register", "Login is not available")
+
+    async def create_char(self, request, logged):
+        if self.adr in logged:
+            if self.session.query(models.Char).filter_by(name=request["name"]).first() is None:
+                self.session.add(models.Char(
+                    name=request["name"],
+                    lvl=1,
+                    rank=1,
+                    user_id=logged[self.adr],
+                    balance=0,
+                    class_name=request["class_name"],
+                    race=request["race"],
+                    strength=1,
+                    agility=1,
+                    smart=1
+                ))
+                self.session.commit()
+                await self.response("create_char")
+            else:
+                await self.send_err("create_char", "Name is not available")
+        else:
+            await self.send_err("create_char", "You didn't login in account")
