@@ -1,6 +1,6 @@
 # remains-of-skyrim
 
-### Pull requests только я одобряю, и merge на master тоже
+### Pull requests только я одобряю
 
 ## Style:
 - отступ - 4 пробела
