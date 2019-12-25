@@ -45,13 +45,12 @@ class Connection:
 
     def get_chars(self):
         if self.user is not None:
-            if len(self.char_list) == 0:
-                res = self.session.query(
-                    models.Char.id, models.Char.name,
-                    models.Char.lvl, models.Char.rank
-                ).filter_by(user_id=self.user.id).all()
-                if len(res) > 0:
-                    self.char_list = res.copy()
+            res = self.session.query(
+                models.Char.id, models.Char.name,
+                models.Char.lvl, models.Char.rank
+            ).filter_by(user_id=self.user.id).all()
+            if len(res) > 0:
+                self.char_list = res.copy()
         return self.char_list
 
     async def login(self, request, logged: dict):
@@ -60,9 +59,10 @@ class Connection:
             if self.adr in logged:
                 logged[self.adr].close()
             logged[self.adr] = self
+            self.char_list = self.get_chars()
             await self.response("login", {
                 "data": {
-                    "chars": self.get_chars()
+                    "chars": self.char_list
                 }
             })
         else:
@@ -110,7 +110,10 @@ class Connection:
                     smart=1
                 ))
                 self.session.commit()
-                await self.response("create_char")
+                self.char_list = self.get_chars()
+                await self.response("create_char", {
+                    "chars": self.char_list
+                })
             else:
                 await self.send_err("create_char", "Name is not available")
         else:
@@ -129,7 +132,7 @@ class Connection:
         if self.user is not None and self.char is not None:
             real_item = self.session.query(models.RealItem).filter_by(id=request["real_item_id"]).all()
             await self.response("get_real_item_by_id", {
-                "item": real_item
+                "real_item": real_item
             })
         else:
             await self.send_err("get_real_item_by_id", "You didn't login in account")

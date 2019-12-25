@@ -99,3 +99,26 @@ class ServerAPI:
             "char_id": char_id
         })
 
+    def get_real_item_by_id(self, real_item_id):
+        self.request("get_real_item_id", {
+            "real_item_id": real_item_id
+        })
+
+    def sell_item(self, real_item_id):
+        self.request("sell_item", {
+            "real_item_id": real_item_id
+        })
+
+    def buy_item(self, item_id):
+        self.request("buy_item", {
+            "item_id": item_id
+        })
+
+    def wear_item(self, real_item_id, slot_name):
+        self.request("wear_item", {
+            "real_item_id": real_item_id,
+            "slot_name": slot_name
+        })
+
+
+
