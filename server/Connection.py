@@ -11,7 +11,7 @@ class Connection:
         self.adr = adr
         self.loop = loop
         self.user = None
-        self.active_char = None
+        self.char = None
         self.char_list = []
         self.session = session()
 
@@ -68,16 +68,23 @@ class Connection:
         else:
             await self.send_err("login", "Invalid login or password")
 
-    async def play(self, request, logged):
-        if self.adr in logged:
+    async def play(self, request):
+        if self.user is not None:
             char = list(filter(lambda x: int(x[0]) == int(request["char_id"]), self.char_list))
             if len(char) == 1:
-                self.active_char = char[0]
+                self.char = char[0]
                 await self.response("play")
             else:
                 await self.send_err("play", "This is char was removed or hasn't created")
         else:
             await self.send_err("play", "You didn't login in account")
+
+    async def leave(self):
+        if self.user is not None and self.char is not None:
+            self.char = None
+            await self.response("leave")
+        else:
+            await self.send_err("leave", "You didn't login in account")
 
     async def register(self, request):
         if self.session.query(models.User).filter_by(login=request["login"]).first() is None:
@@ -87,14 +94,14 @@ class Connection:
         else:
             await self.send_err("register", "Login is not available")
 
-    async def create_char(self, request, logged):
-        if self.adr in logged:
+    async def create_char(self, request):
+        if isinstance(self.user, models.User):
             if self.session.query(models.Char).filter_by(name=request["name"]).first() is None:
                 self.session.add(models.Char(
                     name=request["name"],
                     lvl=1,
                     rank=1,
-                    user_id=logged[self.adr],
+                    user_id=self.user.id,
                     balance=0,
                     class_name=request["class_name"],
                     race=request["race"],
@@ -109,11 +116,66 @@ class Connection:
         else:
             await self.send_err("create_char", "You didn't login in account")
 
-    async def get_inventory(self, request, logged):
-        if self.adr in logged:
-            inventory = self.session.query(models.RealItem).filter_by(char_id=request["char_id"]).all()
+    async def get_inventory(self):
+        if self.user is not None and self.char is not None:
+            inventory = self.session.query(models.RealItem).filter_by(char_id=self.char.id).all()
             await self.response("get_inventory", {
                 "inventory": inventory if inventory is not None else []
             })
         else:
             await self.send_err("get_inventory", "You didn't login in account")
+
+    async def get_real_item_by_id(self, request):
+        if self.user is not None and self.char is not None:
+            real_item = self.session.query(models.RealItem).filter_by(id=request["real_item_id"]).all()
+            await self.response("get_real_item_by_id", {
+                "item": real_item
+            })
+        else:
+            await self.send_err("get_real_item_by_id", "You didn't login in account")
+
+    async def sell_item(self, request):
+        if self.user is not None and self.char is not None:
+            real_item = self.session.query(models.RealItem).filter_by(id=request["real_item_id"]).first()
+            if real_item is not None:
+                price = self.session.query(models.Item).filter_by(id=real_item.item_id).first().price
+                self.char.balance += price
+                self.session.commit()
+            else:
+                await self.send_err("sell_item", "Error with real_item_id")
+        else:
+            await self.send_err("sell_item", "You didn't login in account")
+
+    async def buy_item(self, request):
+        if self.user is not None and self.char is not None:
+            item = self.session.query(models.Item).filter_by(id=request["item_id"]).first()
+            if item is not None:
+                if item.price <= self.char.balance:
+                    self.session.add(models.RealItem(item.id, self.char.id))
+                    self.session.commit()
+                else:
+                    await self.send_err("buy_item", "Not enough money")
+            else:
+                await self.send_err("buy_item", "Error with item_id")
+        else:
+            await self.send_err("buy_item", "You didn't login in account")
+
+    async def wear_item(self, request):
+        if self.user is not None and self.char is not None:
+            real_item = self.session.query(models.RealItem).filter_by(id=request["real_item_id"]).first()
+            if real_item is not None:
+                if request["slot_name"] == "head":
+                    self.char.head = real_item.id
+                elif request["slot_name"] == "body":
+                    self.char.body = real_item.id
+                elif request["slot_name"] == "legs":
+                    self.char.legs = real_item.id
+                elif request["slot_name"] == "boots":
+                    self.char.boots = real_item.id
+                else:
+                    await self.send_err("wear_item", "Error with slot_name")
+            else:
+                await self.send_err("wear_item", "Error with real_item_id")
+        else:
+            await self.send_err("wear_item", "You didn't login in account")
+

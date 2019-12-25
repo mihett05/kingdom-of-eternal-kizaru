@@ -65,15 +65,35 @@ class Server:
 
                     elif request["type"] == "play":
                         self.validate(request, ["char_id"])
-                        await conn.play(request, self.logged)
+                        await conn.play(request)
+
+                    elif request["type"] == "leave":
+                        self.validate(request, [])
+                        await conn.leave()
 
                     elif request["type"] == "create_char":
                         self.validate(request, ["name", "race", "class_name"])
-                        await conn.create_char(request, self.logged)
+                        await conn.create_char(request)
 
                     elif request["type"] == "get_inventory":
-                        self.validate(request, ["char_id"])
-                        await conn.get_inventory(request, self.logged)
+                        self.validate(request, [])
+                        await conn.get_inventory()
+
+                    elif request["type"] == "get_real_item_by_id":
+                        self.validate(request, ["real_item_id"])
+                        await conn.get_real_item_by_id(request)
+
+                    elif request["type"] == "sell_item":
+                        self.validate(request, ["real_item_id"])
+                        await conn.sell_item(request)
+
+                    elif request["type"] == "buy_item":
+                        self.validate(request, ["item_id"])
+                        await conn.buy_item(request)
+
+                    elif request["type"] == "wear_item":
+                        self.validate(request, ["real_item_id", "slot_name"])
+                        await conn.wear_item(request)
 
                     else:
                         await conn.send_err("request", "Unknown type")
@@ -85,6 +105,7 @@ class Server:
             print(e)
 
     async def _start(self):
+        print("Started")
         while True:
             conn, adr = await self.loop.sock_accept(self.socket)
             print("New con: " + str(adr))
