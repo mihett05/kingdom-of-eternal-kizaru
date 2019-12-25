@@ -68,8 +68,8 @@ class Connection:
         else:
             await self.send_err("login", "Invalid login or password")
 
-    async def play(self, request, is_logged):
-        if is_logged:
+    async def play(self, request, logged):
+        if self.adr in logged:
             char = list(filter(lambda x: int(x[0]) == int(request["char_id"]), self.char_list))
             if len(char) == 1:
                 self.active_char = char[0]
@@ -108,3 +108,12 @@ class Connection:
                 await self.send_err("create_char", "Name is not available")
         else:
             await self.send_err("create_char", "You didn't login in account")
+
+    async def get_inventory(self, request, logged):
+        if self.adr in logged:
+            inventory = self.session.query(models.RealItem).filter_by(char_id=request["char_id"]).all()
+            await self.response("get_inventory", {
+                "inventory": inventory if inventory is not None else []
+            })
+        else:
+            await self.send_err("get_inventory", "You didn't login in account")
