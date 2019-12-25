@@ -39,6 +39,12 @@ class Char(Base):
         self.agility = agility
         self.smart = smart
 
+        self.head = 0
+        self.body = 0
+        self.legs = 0
+        self.boots = 0
+        self.weapon = 0
+
     def __repr__(self):
         return f"User({self.name}, {self.lvl}, {self.rank}, {self.user_id})"
 
