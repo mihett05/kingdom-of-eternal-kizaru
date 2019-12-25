@@ -87,3 +87,15 @@ class ServerAPI:
             "password": password
         })
 
+    def create_char(self, name, class_name, race):
+        self.request("create_char", {
+            "name": name,
+            "class_name": class_name,
+            "race": race
+        })
+
+    def get_inventory(self, char_id):
+        self.request("get_inventory", {
+            "char_id": char_id
+        })
+

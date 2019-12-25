@@ -65,11 +65,15 @@ class Server:
 
                     elif request["type"] == "play":
                         self.validate(request, ["char_id"])
-                        await conn.play(request, conn.adr in self.logged)
+                        await conn.play(request, self.logged)
 
                     elif request["type"] == "create_char":
                         self.validate(request, ["name", "race", "class_name"])
                         await conn.create_char(request, self.logged)
+
+                    elif request["type"] == "get_inventory":
+                        self.validate(request, ["char_id"])
+                        await conn.get_inventory(request, self.logged)
 
                     else:
                         await conn.send_err("request", "Unknown type")
