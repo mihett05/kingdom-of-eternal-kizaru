@@ -54,7 +54,7 @@ class Connection:
         return self.char_list
 
     async def login(self, request, logged: dict):
-        user = self.get_user(request["login"], request["password"])
+        user = self.get_user(request["login"], self.hash_password(request["password"]))
         if user is not None and user.id is not None:
             if self.adr in logged:
                 logged[self.adr].close()
