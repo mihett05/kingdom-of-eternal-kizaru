@@ -68,6 +68,6 @@ class LoginScene(Scene):
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.login_button:
-                        self.api.login(self.login.text, self.api.hash_password(self.password.text))
+                        self.api.login(self.login.text, self.password.text)
 
 

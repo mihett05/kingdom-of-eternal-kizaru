@@ -89,15 +89,15 @@ class ServerAPI:
     def hash_password(password):
         return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
-    def login(self, login, hashed_password):
+    def login(self, login, password):
         """
         Login in server
         :param login: username
-        :param hashed_password: password, lol
+        :param password: password, lol
         """
         self.request("login", {
             "login": login,
-            "password": hashed_password
+            "password": password
         })
 
     def logout(self):
