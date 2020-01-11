@@ -22,13 +22,12 @@ class SceneManager:
             self.last = None
 
     def change(self, name, proto):
-        if self.proto is not None:
-            self.name = name
-            self.last = self.proto
-            self.proto = proto
-            self.ui.clear_and_reset()
-            if self.scene is not None:
-                self.scene.clear()
-            self.scene = proto()
+        self.name = name
+        self.last = self.proto
+        self.proto = proto
+        self.ui.clear_and_reset()
+        if self.scene is not None:
+            self.scene.clear()
+        self.scene = proto()
 
 
