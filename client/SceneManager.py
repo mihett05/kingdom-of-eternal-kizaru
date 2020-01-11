@@ -19,13 +19,16 @@ class SceneManager:
             self.ui = self.data["ui"]
             self.queue = []
             self.scene = None
+            self.last = None
 
     def change(self, name, proto):
-        self.name = name
-        self.proto = proto
-        self.ui.clear_and_reset()
-        if self.scene is not None:
-            self.scene.clear()
-        self.scene = proto()
+        if self.proto is not None:
+            self.name = name
+            self.last = self.proto
+            self.proto = proto
+            self.ui.clear_and_reset()
+            if self.scene is not None:
+                self.scene.clear()
+            self.scene = proto()
 
 
