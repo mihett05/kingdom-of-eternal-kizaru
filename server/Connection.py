@@ -14,6 +14,9 @@ class Connection:
         self.char = None
         self.char_list = []
         self.session = session()
+        self.is_finding = False
+        self.in_fight = False
+        self.battle = None
 
     @staticmethod
     def hash_password(password):
@@ -47,10 +50,9 @@ class Connection:
         if self.user is not None:
             res = self.session.query(
                 models.Char.id, models.Char.name,
-                models.Char.lvl, models.Char.rank
+                models.Char.class_name, models.Char.rank
             ).filter_by(user_id=self.user.id).all()
-            if len(res) > 0:
-                self.char_list = res.copy()
+            self.char_list = res.copy()
         return self.char_list
 
     async def login(self, request, logged: dict):
@@ -82,6 +84,8 @@ class Connection:
     async def leave(self):
         if self.user is not None and self.char is not None:
             self.char = None
+            if self.is_finding:
+                self.is_finding = False
             await self.response("leave")
         else:
             await self.send_err("leave", "You didn't login in account")
@@ -143,6 +147,7 @@ class Connection:
             if real_item is not None:
                 price = self.session.query(models.Item).filter_by(id=real_item.item_id).first().price
                 self.char.balance += price
+                self.session.delete(real_item)
                 self.session.commit()
             else:
                 await self.send_err("sell_item", "Error with real_item_id")
@@ -181,4 +186,113 @@ class Connection:
                 await self.send_err("wear_item", "Error with real_item_id")
         else:
             await self.send_err("wear_item", "You didn't login in account")
+
+    async def find(self, request, add_finder):
+        if self.user is not None and self.char is not None and not self.is_finding and not self.in_fight:
+            self.is_finding = True
+            add_finder(self)
+        else:
+            await self.send_err("find", "You didn't login in account")
+
+    async def stop_finding(self, request, del_finder):
+        if self.user is not None and self.char is not None:
+            self.is_finding = False
+            del_finder(self)
+        else:
+            await self.send_err("find", "You didn't login in account")
+
+    async def fight(self, battle):
+        self.in_fight = True
+        self.battle = battle
+        await self.response("find", {
+            "enemy": {
+                "name": self.char.name,
+                "class_name": self.char.class_name,
+                "race": self.char.race,
+                "rank": self.char.rank
+            }
+        })
+
+    async def action(self, request):
+        if self.user is not None and self.char is not None and self.in_fight and self.battle is not None:
+            status = self.battle.action(self, self.session.query(models.Skill).filter_by(
+                id=request["skill_id"]
+            ).first())
+            if status == "ok":
+                await self.response("action", {})  # TO-DO
+            else:
+                await self.send_err("action", status)
+        else:
+            await self.send_err("action", "Not in fight")
+
+    def get_protect_by_real_item(self, real_item_id):
+        if real_item_id is None:
+            return 0
+        return self.session.query(models.Item.protect).filter_by(
+            id=self.session.query(models.RealItem.id).filter_by(id=real_item_id).first()
+        ).first()
+
+    def get_damage_by_real_item(self, real_item_id):
+        if real_item_id is None:
+            return 0
+        return self.session.query(models.Item.damage).fitler_by(
+            id=self.session.query(models.RealItem.id).filter_by(id=real_item_id).first()
+        ).first()
+
+    @staticmethod
+    def get_remains_protect(value: int):
+        return (100 - value) / 100
+
+    @staticmethod
+    def get_remains_attack(value: int):
+        return (100 + value) / 100
+
+    def get_damage(self, damage):
+        for item in [
+            self.get_protect_by_real_item(self.char.head),
+            self.get_protect_by_real_item(self.char.body),
+            self.get_protect_by_real_item(self.char.legs),
+            self.get_protect_by_real_item(self.char.boots),
+            self.get_protect_by_real_item(self.char.weapon)
+        ]:
+            damage *= self.get_remains_protect(item)
+        return damage
+
+    def get_attack_damage(self, skill: models.Skill):
+        if skill.class_name == self.char.class_name:
+            damage = skill.damage
+            bonus = 0
+            if self.char.class_name == "Воин":
+                bonus = self.char.strength
+            elif self.char.class_name == "Вор в законе":
+                bonus = self.char.agility
+            elif self.char.class_name == "Маг":
+                bonus = self.char.smart
+            for item in [
+                bonus,
+                self.get_damage_by_real_item(self.char.head),
+                self.get_damage_by_real_item(self.char.body),
+                self.get_damage_by_real_item(self.char.legs),
+                self.get_damage_by_real_item(self.char.boots),
+                self.get_damage_by_real_item(self.char.weapon)
+            ]:
+                damage *= self.get_remains_attack(item)
+            return damage
+        return 0
+
+    async def win(self):
+        self.char.rank += 1
+        self.session.commit()
+        await self.response("fight", {
+            "is_win": True,
+            "rank": self.char.rank
+        })
+
+    async def loose(self):
+        self.char.rank -= 1
+        self.session.commit()
+        await self.response("fight", {
+            "is_win": False,
+            "rank": self.char.rank
+        })
 
