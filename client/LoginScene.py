@@ -102,9 +102,10 @@ class LoginScene(Scene):
                         #self.api.login(self.login.text, self.api.hash_password(self.password.text))
                         self.account["login"] = 'MrEluzium'
                         self.account["password"] = self.api.hash_password(self.password.text)
-                        self.account["chars"] = [[0, 'Кабанчик Толя', 'Вор в законе', 3],
-                                                 [1, 'Кабанчик Миша', 'Еврей', 1],
-                                                 [2, 'Кабанчик Ахмед', 'Росгвардеец', 7]]
+                        self.account["chars"] = [{'id': 0, 'name': 'Кабанчик Рома', 'class': 'Вор в законе',
+                                                  'rank': 3, 'blacklist': 3, 'money': 100},
+                                                 {'id': 1, 'name': 'Михетт', 'class': 'Росгвардеец',
+                                                  'rank': 8,  'blacklist': 5, 'money':  750}]
                         print(self.account)
                         self.scene_manager.change("MainMenu", MainMenuScene, make_dump=True)
                     elif event.ui_element == self.quit_button:
