@@ -46,7 +46,7 @@ class Char(Base):
         self.weapon = 0
 
     def __repr__(self):
-        return f"User({self.name}, {self.lvl}, {self.rank}, {self.user_id})"
+        return f"Char({self.name}, {self.lvl}, {self.rank}, {self.user_id})"
 
 
 

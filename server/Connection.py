@@ -14,6 +14,9 @@ class Connection:
         self.char = None
         self.char_list = []
         self.session = session()
+        self.is_finding = False
+        self.in_fight = False
+        self.battle = None
 
     @staticmethod
     def hash_password(password):
@@ -47,10 +50,9 @@ class Connection:
         if self.user is not None:
             res = self.session.query(
                 models.Char.id, models.Char.name,
-                models.Char.lvl, models.Char.rank
+                models.Char.class_name, models.Char.rank
             ).filter_by(user_id=self.user.id).all()
-            if len(res) > 0:
-                self.char_list = res.copy()
+            self.char_list = res.copy()
         return self.char_list
 
     async def login(self, request, logged: dict):
@@ -82,6 +84,8 @@ class Connection:
     async def leave(self):
         if self.user is not None and self.char is not None:
             self.char = None
+            if self.is_finding:
+                self.is_finding = False
             await self.response("leave")
         else:
             await self.send_err("leave", "You didn't login in account")
@@ -181,4 +185,61 @@ class Connection:
                 await self.send_err("wear_item", "Error with real_item_id")
         else:
             await self.send_err("wear_item", "You didn't login in account")
+
+    async def find(self, request, add_finder):
+        if self.user is not None and self.char is not None and not self.is_finding and not self.in_fight:
+            self.is_finding = True
+            add_finder(self)
+        else:
+            await self.send_err("find", "You didn't login in account")
+
+    async def stop_finding(self, request, del_finder):
+        if self.user is not None and self.char is not None:
+            self.is_finding = False
+            del_finder(self)
+        else:
+            await self.send_err("find", "You didn't login in account")
+
+    async def fight(self, battle):
+        self.in_fight = True
+        self.battle = battle
+        await self.response("find", {
+            "enemy": {
+                "name": self.char.name,
+                "class_name": self.char.class_name,
+                "race": self.char.race,
+                "rank": self.char.rank
+            }
+        })
+
+    async def action(self, request):
+        if self.user is not None and self.char is not None and self.in_fight and self.battle is not None:
+            status = self.battle.action(self, self.session.query(models.Skill).filter_by(
+                id=request["skill_id"]
+            ).first())
+            if status == "ok":
+                await self.response("action", {})  # TO-DO
+            else:
+                await self.send_err("action", status)
+        else:
+            await self.send_err("action", "Not in fight")
+
+    async def get_damage(self, damage):
+        return damage  # TO-DO
+
+    async def win(self):
+        self.char.rank += 1
+        self.session.commit()
+        await self.response("fight", {
+            "is_win": True,
+            "rank": self.char.rank
+        })
+
+    async def loose(self):
+        self.char.rank -= 1
+        self.session.commit()
+        await self.response("fight", {
+            "is_win": False,
+            "rank": self.char.rank
+        })
 

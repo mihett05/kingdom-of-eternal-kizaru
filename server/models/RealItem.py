@@ -2,9 +2,10 @@ from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from .Char import Char
 from .Item import Item
+Base = declarative_base()
 
 
-class RealItem(declarative_base()):
+class RealItem(Base):
     __tablename__ = "inventory"
     id = Column(Integer, primary_key=True, autoincrement=True)
     item_id = Column(Integer, ForeignKey(Item.id))
