@@ -34,25 +34,24 @@ class MainMenuScene(Scene):
 
         self.status = None
         self.quit_button = self.new_element(pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 2.6, 240, 40), manager=self.ui,
+            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 9 + 140, 240, 50), manager=self.ui,
             text="Выйти из игры"
         ))
         self.play_button = self.new_element(pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 7, 240, 50), manager=self.ui,
+            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 9, 240, 50), manager=self.ui,
             text="Играть"
         ))
         self.settings_button = self.new_element(pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 7 + 70, 240, 50),
+            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 9 + 70, 240, 50),
             manager=self.ui,
             text="Настройки"
         ))
-        self.name = 'MrEluzium'
-        self.font = pygame.font.Font('data/AtariRevue.ttf', 20)
-        self.logined_account = self.font.render("Аккаунт: {}".format(self.name), False, (0, 0, 0))
+        self.font = pygame.font.Font('data/AtariRevue.ttf', 26)
+        self.logined_account = self.font.render("Аккаунт: {}".format(self.account["login"]), False, (0, 0, 0))
 
     def draw(self):
         self.sprites.draw(self.screen)
-        self.screen.blit(self.logined_account, (self.size[0] / 40, self.size[1] - self.size[1] / 32))
+        self.screen.blit(self.logined_account, (self.size[0] / 40, self.size[1] - self.size[1] / 29))
         for sprite in self.sprites.spritedict.keys():
             sprite.update()
 

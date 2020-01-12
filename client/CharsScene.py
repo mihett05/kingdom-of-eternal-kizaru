@@ -38,6 +38,11 @@ class CharsScene(Scene):
             relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 2.6, 240, 40), manager=self.ui,
             text="Выйти из игры"
         ))
+        self.back_button = self.new_element(pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 3, 240, 40),
+            manager=self.ui,
+            text="Назад"
+        ))
         self.char1_play_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 5.5, self.size[1] - self.size[1] / 2.5, 220, 35),
             manager=self.ui,
@@ -61,9 +66,12 @@ class CharsScene(Scene):
             manager=self.ui,
             text="Создать"
         ))
+        self.font = pygame.font.Font('data/AtariRevue.ttf', 26)
+        self.logined_account = self.font.render("Аккаунт: {}".format(self.account["login"]), False, (0, 0, 0))
 
     def draw(self):
         self.sprites.draw(self.screen)
+        self.screen.blit(self.logined_account, (self.size[0] / 40, self.size[1] - self.size[1] / 29))
         for sprite in self.sprites.spritedict.keys():
             sprite.update()
 
@@ -77,6 +85,8 @@ class CharsScene(Scene):
                     if event.ui_element == self.quit_button:
                         pygame.quit()
                         sys.exit(0)
+                    elif event.ui_element == self.back_button:
+                        self.scene_manager.change("MainMenu", self.scene_manager.dumps["MainMenu"])
                     elif event.ui_element == self.char1_delete_button \
                             or event.ui_element == self.char2_delete_button:
                         self.scene_manager.change("CharDelete", CharDeleteScene)

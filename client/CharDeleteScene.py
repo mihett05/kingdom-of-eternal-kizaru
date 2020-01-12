@@ -33,33 +33,27 @@ class CharDeleteScene(Scene):
 
         self.status = None
         self.ok_button = self.new_element(pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 2.6, 240, 40), manager=self.ui,
+            relative_rect=pygame.Rect(self.size[0] / 2 - 260, self.size[1] / 2, 240, 40), manager=self.ui,
             text="Подтвердить"
         ))
         self.cancel_button = self.new_element(pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 7, 240, 50), manager=self.ui,
+            relative_rect=pygame.Rect(self.size[0] / 2 + 20, self.size[1] / 2, 240, 40), manager=self.ui,
             text="Отмена"
         ))
-        self.name = 'MrEluzium'
-        self.font = pygame.font.Font('data/AtariRevue.ttf', 20)
-        self.logined_account = self.font.render("Аккаунт: {}".format(self.name), False, (0, 0, 0))
-        #self.new_element(pygame_gui.elements.  UILabel(text="Аккаунт: {}".format(self.name),
-        #                                             relative_rect=pygame.Rect(self.size[0] / 40, self.size[1] - self.size[1] / 32, 85 + 8 * len(self.name), 22),
-        #                                             manager=self.ui))
+        self.font = pygame.font.Font('data/AtariRevue.ttf', 26)
+        self.logined_account = self.font.render("Аккаунт: {}".format(self.account["login"]), False, (0, 0, 0))
 
     def draw(self):
         self.sprites.draw(self.screen)
+        self.screen.blit(self.logined_account, (self.size[0] / 40, self.size[1] - self.size[1] / 29))
         for sprite in self.sprites.spritedict.keys():
             sprite.update()
 
     def process_events(self, event):
-        if self.scene_manager.name == "MainMenu":
+        if self.scene_manager.name == "CharDelete":
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == self.play_button:
-                        self.scene_manager.change("CharsScene", CharsScene)
-                    elif event.ui_element == self.settings_button:
-                        self.scene_manager.change("Settings", SettingsScene)
-                    elif event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                    if event.ui_element == self.cancel_button:
+                        self.scene_manager.change("CharsScene", self.scene_manager.last)
+                    elif event.ui_element == self.ok_button:
+                        self.scene_manager.change("CharsScene", self.scene_manager.last)
