@@ -3,6 +3,7 @@ import pygame
 import pygame_gui
 import threading
 from client.LoginScene import LoginScene
+#from client.CharsScene import CharsScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
@@ -16,8 +17,14 @@ class Game:
 
         self.data["load_image"] = self.load_image
         self.data["account"] = dict()
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        #self.screen = pygame.display.set_mode((800, 800))
+        self.isfullscreen = 0
+        if self.isfullscreen:
+            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((1600, 900))
+        pygame.display.set_caption("Kingdom of Eternal Kizaru")
+        icon = pygame.image.load('data/icon.png')
+        pygame.display.set_icon(icon)
         self.sprites = pygame.sprite.Group()
         self.data.set("screen", self.screen)
 
