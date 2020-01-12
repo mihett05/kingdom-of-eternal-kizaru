@@ -9,6 +9,7 @@ class Skill(Base):
     name = Column(String, unique=True)
     price = Column(Integer, default=0)
     damage = Column(Integer, default=0)
+    class_name = Column(String)
 
     def __init__(self, name, price, damage):
         self.name = name

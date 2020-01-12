@@ -147,6 +147,7 @@ class Connection:
             if real_item is not None:
                 price = self.session.query(models.Item).filter_by(id=real_item.item_id).first().price
                 self.char.balance += price
+                self.session.delete(real_item)
                 self.session.commit()
             else:
                 await self.send_err("sell_item", "Error with real_item_id")
@@ -224,8 +225,60 @@ class Connection:
         else:
             await self.send_err("action", "Not in fight")
 
-    async def get_damage(self, damage):
-        return damage  # TO-DO
+    def get_protect_by_real_item(self, real_item_id):
+        if real_item_id is None:
+            return 0
+        return self.session.query(models.Item.protect).filter_by(
+            id=self.session.query(models.RealItem.id).filter_by(id=real_item_id).first()
+        ).first()
+
+    def get_damage_by_real_item(self, real_item_id):
+        if real_item_id is None:
+            return 0
+        return self.session.query(models.Item.damage).fitler_by(
+            id=self.session.query(models.RealItem.id).filter_by(id=real_item_id).first()
+        ).first()
+
+    @staticmethod
+    def get_remains_protect(value: int):
+        return (100 - value) / 100
+
+    @staticmethod
+    def get_remains_attack(value: int):
+        return (100 + value) / 100
+
+    def get_damage(self, damage):
+        for item in [
+            self.get_protect_by_real_item(self.char.head),
+            self.get_protect_by_real_item(self.char.body),
+            self.get_protect_by_real_item(self.char.legs),
+            self.get_protect_by_real_item(self.char.boots),
+            self.get_protect_by_real_item(self.char.weapon)
+        ]:
+            damage *= self.get_remains_protect(item)
+        return damage
+
+    def get_attack_damage(self, skill: models.Skill):
+        if skill.class_name == self.char.class_name:
+            damage = skill.damage
+            bonus = 0
+            if self.char.class_name == "Воин":
+                bonus = self.char.strength
+            elif self.char.class_name == "Вор в законе":
+                bonus = self.char.agility
+            elif self.char.class_name == "Маг":
+                bonus = self.char.smart
+            for item in [
+                bonus,
+                self.get_damage_by_real_item(self.char.head),
+                self.get_damage_by_real_item(self.char.body),
+                self.get_damage_by_real_item(self.char.legs),
+                self.get_damage_by_real_item(self.char.boots),
+                self.get_damage_by_real_item(self.char.weapon)
+            ]:
+                damage *= self.get_remains_attack(item)
+            return damage
+        return 0
 
     async def win(self):
         self.char.rank += 1

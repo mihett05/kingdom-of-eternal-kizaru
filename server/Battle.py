@@ -30,7 +30,8 @@ class Battle:
             self.step = 0 if self.step == 1 else 1
             if player["power"] >= skill.price:
                 player["power"] -= skill.price
-                enemy["health"] -= enemy["conn"].get_damage(skill.damage)
+                damage = player["conn"].get_attack_damage(skill)
+                enemy["health"] -= enemy["conn"].get_damage(damage)
                 if enemy["health"] <= 0:
                     if callable(self.end_callback):
                         self.end_callback(player["conn"], enemy["conn"])
