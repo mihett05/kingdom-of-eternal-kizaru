@@ -16,7 +16,7 @@ class Game:
 
         self.data["load_image"] = self.load_image
         self.data["account"] = dict()
-        self.isfullscreen = 1
+        self.isfullscreen = 0
         if self.isfullscreen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:

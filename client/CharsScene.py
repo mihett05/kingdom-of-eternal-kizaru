@@ -204,6 +204,12 @@ class CharsScene(Scene):
                         sys.exit(0)
                     elif event.ui_element == self.back_button:
                         self.scene_manager.change("MainMenu", self.scene_manager.dumps["MainMenu"])
-                    elif event.ui_element == self.first_char_delete_button \
-                            or event.ui_element == self.second_char_delete_button:
+                    elif event.ui_element == self.first_char_delete_button:
+                        self.account["chosen_char_id"] = 0
+                        self.scene_manager.change("CharDelete", CharDeleteScene)
+                    elif event.ui_element == self.second_char_delete_button:
+                        self.account["chosen_char_id"] = 1
+                        self.scene_manager.change("CharDelete", CharDeleteScene)
+                    elif event.ui_element == self.third_char_delete_button:
+                        self.account["chosen_char_id"] = 2
                         self.scene_manager.change("CharDelete", CharDeleteScene)
