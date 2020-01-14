@@ -2,7 +2,6 @@ import pygame
 import os
 import pygame_gui
 coins = 10000000
-need = 0
 inthelect = 0
 lib_cost = 100
 
@@ -46,9 +45,8 @@ class Library():
             return True
 
     def reading(self):
-        global coins, inthelect, lib_cost, need
+        global coins, inthelect, lib_cost
         inthelect += 1
-        need += lib_cost
         coins -= lib_cost
         lib_cost *= 1.02
         lib_cost = int(lib_cost)
