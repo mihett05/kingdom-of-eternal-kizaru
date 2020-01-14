@@ -3,7 +3,6 @@ import pygame
 import pygame_gui
 import threading
 from client.LoginScene import LoginScene
-#from client.CharsScene import CharsScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
