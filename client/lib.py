@@ -1,7 +1,8 @@
 import pygame
 import os
 import pygame_gui
-coins = 10000000000000000000000000000000000
+coins = 10000000
+need = 0
 inthelect = 0
 lib_cost = 100
 
@@ -45,10 +46,11 @@ class Library():
             return True
 
     def reading(self):
-        global coins, inthelect, lib_cost
+        global coins, inthelect, lib_cost, need
         inthelect += 1
+        need += lib_cost
         coins -= lib_cost
-        lib_cost *= 1.05
+        lib_cost *= 1.02
         lib_cost = int(lib_cost)
         self.draw()
 
@@ -76,23 +78,23 @@ class Library():
         podskazka += str(lib_cost)
         podskazka += ' , а у вас '
         podskazka += str(coins)
-        self.read = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((320, 545), (200, 100)),
-                                            text='Прочитать книгу',
-                                            tool_tip_text=podskazka,
-                                            manager=self.manager)
+        if self.check():
+            self.read = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((320, 545), (200, 100)),
+                                                    text='Прочитать книгу',
+                                                    tool_tip_text=podskazka,
+                                                    manager=self.manager)
         if not self.check():
-            self.read.disable()
             if coins <= lib_cost:
                 text_error = 'Не хватка монет'
-                self.fontObj = pygame.font.Font('freesansbold.ttf', 20)
+                self.fontObj = pygame.font.Font('freesansbold.ttf', 100)
                 self.textSurfaceObj = self.fontObj.render(text_error, True, pygame.Color('white'))
                 self.textRectObj = self.textSurfaceObj.get_rect()
-                self.textRectObj.center = (415, 660)
+                self.textRectObj.center = (400, 400)
                 self.background.blit(self.textSurfaceObj, self.textRectObj)
                 pygame.display.flip()
             elif inthelect == 100:
                 text_error = 'Вы - гений'
-                self.fontObj = pygame.font.Font('freesansbold.ttf', 20)
+                self.fontObj = pygame.font.Font('freesansbold.ttf', 100)
                 self.textSurfaceObj = self.fontObj.render(text_error, True, pygame.Color('white'))
                 self.textRectObj = self.textSurfaceObj.get_rect()
                 self.textRectObj.center = (425, 660)
