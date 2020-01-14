@@ -3,8 +3,8 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
-from client.CharDeleteScene import CharDeleteScene
-from client.SettingsScene import SettingsScene
+from client.Scenes import CharDeleteScene
+from client.Scenes.GameScene import GameScene
 
 
 class CharsScene(Scene):
@@ -80,3 +80,5 @@ class CharsScene(Scene):
                     elif event.ui_element == self.char1_delete_button \
                             or event.ui_element == self.char2_delete_button:
                         self.scene_manager.change("CharDelete", CharDeleteScene)
+                    elif event.ui_element == self.char1_play_button:
+                        self.scene_manager.change("Game", GameScene)

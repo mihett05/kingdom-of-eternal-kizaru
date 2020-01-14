@@ -2,8 +2,7 @@ import os
 import pygame
 import pygame_gui
 import threading
-from client.LoginScene import LoginScene
-#from client.CharsScene import CharsScene
+from client.Scenes import LoginScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
@@ -72,7 +71,7 @@ class Game:
             pygame.display.flip()
 
     def run(self):
-        self.api.connect()
+        #self.api.connect()
         threading.Thread(target=self.api.receive_thread).start()
         threading.Thread(target=self.api.broadcast_thread).start()
         run = True
@@ -91,7 +90,7 @@ class Game:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
-        self.api.logout()
-        self.api.close()
+        #self.api.logout()
+        #self.api.close()
         pygame.quit()
 

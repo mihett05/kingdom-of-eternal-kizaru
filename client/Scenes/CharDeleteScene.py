@@ -3,11 +3,10 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
-from client.SettingsScene import SettingsScene
-from client.CharsScene import CharsScene
+from client.Scenes import SettingsScene
 
 
-class MainMenuScene(Scene):
+class CharDeleteScene(Scene):
     def __init__(self):
         self.bg = pygame.sprite.Sprite()
         Scene.__init__(self)
@@ -25,7 +24,7 @@ class MainMenuScene(Scene):
             return pygame.image.load(os.path.join("data", "default.png")).convert()
 
     def init_ui(self):
-        self.bg.image = pygame.transform.scale(self.load_image_ins('greenback4.jpg'),
+        self.bg.image = pygame.transform.scale(self.load_image_ins('deleteMOKUP.jpg'),
                                           (self.size[0], self.size[1]))
         self.bg.rect = self.bg.image.get_rect()
         self.bg.rect.x = 0
@@ -33,26 +32,23 @@ class MainMenuScene(Scene):
         self.sprites.add(self.bg)
 
         self.status = None
-        self.quit_button = self.new_element(pygame_gui.elements.UIButton(
+        self.ok_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 2.6, 240, 40), manager=self.ui,
-            text="Выйти из игры"
+            text="Подтвердить"
         ))
-        self.play_button = self.new_element(pygame_gui.elements.UIButton(
+        self.cancel_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 7, 240, 50), manager=self.ui,
-            text="Играть"
-        ))
-        self.settings_button = self.new_element(pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 7 + 70, 240, 50),
-            manager=self.ui,
-            text="Настройки"
+            text="Отмена"
         ))
         self.name = 'MrEluzium'
         self.font = pygame.font.Font('data/AtariRevue.ttf', 20)
         self.logined_account = self.font.render("Аккаунт: {}".format(self.name), False, (0, 0, 0))
+        #self.new_element(pygame_gui.elements.  UILabel(text="Аккаунт: {}".format(self.name),
+        #                                             relative_rect=pygame.Rect(self.size[0] / 40, self.size[1] - self.size[1] / 32, 85 + 8 * len(self.name), 22),
+        #                                             manager=self.ui))
 
     def draw(self):
         self.sprites.draw(self.screen)
-        self.screen.blit(self.logined_account, (self.size[0] / 40, self.size[1] - self.size[1] / 32))
         for sprite in self.sprites.spritedict.keys():
             sprite.update()
 
@@ -61,7 +57,7 @@ class MainMenuScene(Scene):
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.play_button:
-                        self.scene_manager.change("CharsScene", CharsScene)
+                        self.scene_manager.change("CharsScene", self.scene_manager.last)
                     elif event.ui_element == self.settings_button:
                         self.scene_manager.change("Settings", SettingsScene)
                     elif event.ui_element == self.quit_button:
