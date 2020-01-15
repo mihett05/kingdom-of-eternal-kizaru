@@ -59,7 +59,11 @@ class LoginScene(Scene):
             relative_rect=pygame.Rect(self.size[0] / 2 - 100, self.size[1] / 2 + 80, 200, 30), manager=self.ui,
             text="Войти"
         ))
-
+        self.register_button = self.new_element(pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 3, 240, 40),
+            manager=self.ui,
+            text="Регистрация"
+        ))
         self.quit_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 2.6, 240, 40), manager=self.ui,
             text="Выйти из игры"
@@ -89,13 +93,22 @@ class LoginScene(Scene):
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.login_button:
                         #self.api.login(self.login.text, self.api.hash_password(self.password.text))
-                        self.account["login"] = self.login.text
+                        self.account["login"] = 'MrEluzium'
                         self.account["password"] = self.api.hash_password(self.password.text)
-                        self.account["chars"] = [[0, 'Кабанчик Толя', 'Вор в законе', 3],
-                                                 [1, 'Кабанчик Миша', 'Еврей', 1],
-                                                 [2, 'Кабанчик Ахмед', 'Росгвардеец', 7]]
+                        backup = [{'id': 0, 'name': '0', 'class': '0',
+                                                  'rank': 0, 'blacklist': 0, 'money': 0},
+                                                 {'id': 1, 'name': '0', 'class': '0',
+                                                  'rank': 0,  'blacklist': 0, 'money':  0},
+                                                 {'id': 2, 'name': '0', 'class': '0',
+                                                  'rank': 0,  'blacklist': 0, 'money':  0}]
+                        self.account["chars"] = [{'id': 0, 'name': 'Кабанчик Рома', 'class': 'Вор в законе',
+                                                  'rank': 3, 'blacklist': 3, 'money': 100},
+                                                 {'id': 1, 'name': 'Михетт', 'class': 'Росгвардеец',
+                                                  'rank': 8, 'blacklist': 5, 'money': 750},
+                                                 {'id': 2, 'name': 'Михетт', 'class': 'Росгвардеец',
+                                                  'rank': 8, 'blacklist': 5, 'money': 750}]
                         print(self.account)
-                        self.scene_manager.change("MainMenu", MainMenuScene)
+                        self.scene_manager.change("MainMenu", MainMenuScene, make_dump=True)
                     elif event.ui_element == self.quit_button:
                         pygame.quit()
                         sys.exit(0)
