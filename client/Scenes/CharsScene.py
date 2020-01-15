@@ -214,5 +214,7 @@ class CharsScene(Scene):
                     elif event.ui_element == self.third_char_delete_button:
                         self.account["chosen_char_id"] = 2
                         self.scene_manager.change("CharDelete", CharDeleteScene)
-                    elif event.ui_element == self.char1_play_button:
+                    elif event.ui_element == self.first_char_play_button:
                         self.scene_manager.change("Game", GameScene)
+                        self.account["chosen_char_id"] = 0
+
