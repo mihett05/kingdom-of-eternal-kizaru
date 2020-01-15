@@ -3,8 +3,8 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
-from client.SettingsScene import SettingsScene
-from client.CharsScene import CharsScene
+from client.Scenes.SettingsScene import SettingsScene
+from client.Scenes import CharsScene
 
 
 class MainMenuScene(Scene):

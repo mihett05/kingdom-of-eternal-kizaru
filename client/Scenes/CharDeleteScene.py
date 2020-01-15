@@ -2,6 +2,7 @@ import pygame
 import pygame_gui
 import os
 from client.Scene import Scene
+from client.Scenes import SettingsScene
 
 
 class CharDeleteScene(Scene):

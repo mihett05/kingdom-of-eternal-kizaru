@@ -3,9 +3,7 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
-from client.AnimatedSprite import AnimatedSprite
-from client.MainMenuScene import MainMenuScene
-#from client.CharsScene import CharsScene
+from client.Scenes.MainMenuScene import MainMenuScene
 
 
 class LoginScene(Scene):
@@ -24,7 +22,7 @@ class LoginScene(Scene):
                 self.account["login"] = self.login.text
                 self.account["password"] = self.api.hash_password(self.password.text)
                 self.account["chars"] = data["data"]["chars"]
-                self.scene_manager.change("chars", MainMenuScene)
+                self.scene_manager.change("MainMenu", MainMenuScene)
             else:
                 self.set_result("Ошибка: Неправильный логин или пароль")
 
@@ -70,10 +68,6 @@ class LoginScene(Scene):
             relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 + self.size[1] / 2.6, 240, 40), manager=self.ui,
             text="Выйти из игры"
         ))
-        #self.play_button = self.new_element(pygame_gui.elements.UIButton(
-        #    relative_rect=pygame.Rect(self.size[0] / 2 - 120, self.size[1] / 2 - self.size[1] / 4, 240, 50), manager=self.ui,
-        #    text="Играть"
-        #))
 
     def draw(self):
         self.sprites.draw(self.screen)
@@ -95,7 +89,6 @@ class LoginScene(Scene):
         if self.scene_manager.name == "login":
             if event.type == pygame.MOUSEMOTION:
                 pass
-                #self.bg.rect.x = event.pos[0] // 40 - 50
             elif event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.login_button:

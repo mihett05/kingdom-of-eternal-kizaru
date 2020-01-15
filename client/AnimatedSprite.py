@@ -1,5 +1,6 @@
 import pygame
 
+
 class AnimatedSprite(pygame.sprite.Sprite):
     def __init__(self, all_sprites, sheet, columns, rows, x, y, frames=None):
         pygame.sprite.Sprite.__init__(self, all_sprites)
