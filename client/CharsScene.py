@@ -3,6 +3,7 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
+from client.CharMakerScene import CharMakerScene
 from client.CharDeleteScene import CharDeleteScene
 
 
@@ -213,3 +214,12 @@ class CharsScene(Scene):
                     elif event.ui_element == self.third_char_delete_button:
                         self.account["chosen_char_id"] = 2
                         self.scene_manager.change("CharDelete", CharDeleteScene)
+                    elif event.ui_element == self.first_char_create_button:
+                        self.account["chosen_char_id"] = 0
+                        self.scene_manager.change("CharMaker", CharMakerScene)
+                    elif event.ui_element == self.second_char_create_button:
+                        self.account["chosen_char_id"] = 1
+                        self.scene_manager.change("CharMaker", CharMakerScene)
+                    elif event.ui_element == self.third_char_create_button:
+                        self.account["chosen_char_id"] = 2
+                        self.scene_manager.change("CharMaker", CharMakerScene)

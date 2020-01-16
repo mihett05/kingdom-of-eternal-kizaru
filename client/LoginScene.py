@@ -3,9 +3,8 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
-from client.AnimatedSprite import AnimatedSprite
+from client.RegisterScene import RegisterScene
 from client.MainMenuScene import MainMenuScene
-#from client.CharsScene import CharsScene
 
 
 class LoginScene(Scene):
@@ -93,22 +92,17 @@ class LoginScene(Scene):
 
     def process_events(self, event):
         if self.scene_manager.name == "login":
-            if event.type == pygame.MOUSEMOTION:
-                pass
-                #self.bg.rect.x = event.pos[0] // 40 - 50
-            elif event.type == pygame.USEREVENT:
+            if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.login_button:
                         #self.api.login(self.login.text, self.api.hash_password(self.password.text))
                         self.account["login"] = 'MrEluzium'
                         self.account["password"] = self.api.hash_password(self.password.text)
-                        backup = [{'id': 0, 'name': '0', 'class': '0',
-                                                  'rank': 0, 'blacklist': 0, 'money': 0},
-                                                 {'id': 1, 'name': '0', 'class': '0',
+                        self.account["chars"] = [{'id': 1, 'name': '0', 'class': '0',
                                                   'rank': 0,  'blacklist': 0, 'money':  0},
                                                  {'id': 2, 'name': '0', 'class': '0',
                                                   'rank': 0,  'blacklist': 0, 'money':  0}]
-                        self.account["chars"] = [{'id': 0, 'name': 'Кабанчик Рома', 'class': 'Вор в законе',
+                        backup = [{'id': 0, 'name': 'Кабанчик Рома', 'class': 'Вор в законе',
                                                   'rank': 3, 'blacklist': 3, 'money': 100},
                                                  {'id': 1, 'name': 'Михетт', 'class': 'Росгвардеец',
                                                   'rank': 8, 'blacklist': 5, 'money': 750},
@@ -116,6 +110,8 @@ class LoginScene(Scene):
                                                   'rank': 8, 'blacklist': 5, 'money': 750}]
                         print(self.account)
                         self.scene_manager.change("MainMenu", MainMenuScene, make_dump=True)
+                    elif event.ui_element == self.register_button:
+                        self.scene_manager.change("Register", RegisterScene)
                     elif event.ui_element == self.quit_button:
                         pygame.quit()
                         sys.exit(0)

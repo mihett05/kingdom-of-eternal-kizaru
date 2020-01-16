@@ -19,6 +19,7 @@ class CharDeleteScene(Scene):
         for i in self.account["chars"]:
             if i['id'] == char_id:
                 self.char = i
+                self.char_inlist_place = self.account["chars"].index(i)
                 break
         self.init_ui()
 
@@ -67,6 +68,6 @@ class CharDeleteScene(Scene):
                         self.scene_manager.change("CharsScene", self.scene_manager.last)
                     elif event.ui_element == self.ok_button:
                         # Удаление перса здесь. Номар перса в self.account["chosen_char_id"]. Инфа о персе в self.char
-                        # del self.account["chars"][self.account["chosen_char_id"]] Для проверки.
+                        del self.account["chars"][self.char_inlist_place]  # Для проверки.
                         self.account["chosen_char_id"] = None
                         self.scene_manager.change("CharsScene", self.scene_manager.last)
