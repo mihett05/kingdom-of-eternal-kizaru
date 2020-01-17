@@ -13,13 +13,11 @@ class Audio():
 
     def play(self):
         pygame.mixer.music.load(self.name)
-        pygame.mixer.music.play(-1)
+        pygame.mixer.music.play(1)
 
     def stop(self):
         pygame.mixer.music.stop()
 
     def reset(self):
         pygame.mixer.music.stop()
-        pygame.mixer.music.play(-1)
-
-
+        pygame.mixer.music.play(1)
