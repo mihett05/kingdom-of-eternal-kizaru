@@ -11,7 +11,8 @@ class CharMakerScene(Scene):
         Scene.__init__(self)
         self.sprites = pygame.sprite.Group()
 
-        self.quit_button, self.back_button = None, None
+        self.quit_button, self.back_button, self.done_button = None, None, None
+        self.char_name, self.select_class = None, None
         self.font = self.font = pygame.font.Font('data/AtariRevue.ttf', 26)
         self.logined_account, self.chosen_class = None, None
         self.status = None
