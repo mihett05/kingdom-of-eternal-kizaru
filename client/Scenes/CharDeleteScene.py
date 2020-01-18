@@ -17,10 +17,9 @@ class CharDeleteScene(Scene):
         self.account_font = pygame.font.Font('data/AtariRevue.ttf', 26)
         self.mainfont = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 26.3))
         char_id = self.account["chosen_char_id"]
-        for i in self.account["chars"]:
-            if i['id'] == char_id:
-                self.char = i
-                break
+        if char_id < len(self.account["chars"]):
+            self.char = self.account["chars"][char_id]
+            self.char_inlist_place = char_id
         self.init_ui()
 
     @staticmethod
@@ -68,6 +67,6 @@ class CharDeleteScene(Scene):
                         self.scene_manager.change("CharsScene", self.scene_manager.last)
                     elif event.ui_element == self.ok_button:
                         # Удаление перса здесь. Номар перса в self.account["chosen_char_id"]. Инфа о персе в self.char
-                        # del self.account["chars"][self.account["chosen_char_id"]] Для проверки.
+                        del self.account["chars"][self.char_inlist_place]  # Для проверки.
                         self.account["chosen_char_id"] = None
                         self.scene_manager.change("CharsScene", self.scene_manager.last)

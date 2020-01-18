@@ -3,6 +3,7 @@ import pygame_gui
 import os
 import sys
 from client.Scene import Scene
+from client.Scenes.CharMakerScene import CharMakerScene
 from client.Scenes import CharDeleteScene
 from client.Scenes.GameScene import GameScene
 
@@ -35,14 +36,9 @@ class CharsScene(Scene):
         self.init_ui()
 
     def char_info_load(self, char_id):
-        char, char_exist = None, None
-        for i in self.account["chars"]:
-            if i['id'] == char_id:
-                char = i
-                char_exist = True
-                break
-            char_exist = False
-        return char, char_exist
+        if char_id < len(self.account["chars"]):
+            return self.account["chars"][char_id], True
+        return None, False
 
     def load_slot_one(self):
         char, self.first_char_is_exist = self.char_info_load(0)
@@ -214,6 +210,15 @@ class CharsScene(Scene):
                     elif event.ui_element == self.third_char_delete_button:
                         self.account["chosen_char_id"] = 2
                         self.scene_manager.change("CharDelete", CharDeleteScene)
+                    elif event.ui_element == self.first_char_create_button:
+                        self.account["chosen_char_id"] = 0
+                        self.scene_manager.change("CharMaker", CharMakerScene)
+                    elif event.ui_element == self.second_char_create_button:
+                        self.account["chosen_char_id"] = 1
+                        self.scene_manager.change("CharMaker", CharMakerScene)
+                    elif event.ui_element == self.third_char_create_button:
+                        self.account["chosen_char_id"] = 2
+                        self.scene_manager.change("CharMaker", CharMakerScene)
                     elif event.ui_element == self.first_char_play_button:
                         self.account["chosen_char_id"] = 0  # TO-DO API
                         self.scene_manager.change("Game", GameScene)
