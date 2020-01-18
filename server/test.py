@@ -9,16 +9,14 @@ s.bind(("", 0))
 run = True
 
 
-def receive_thread():
-    global run
-    while run:
-        print("waiting")
-        data = s.recv(4096)
-        try:
-            response = json.loads(data.decode("utf-8"))
-            print(response)
-        except json.JSONDecodeError:
-            print("json error")
+def receive():
+    data = s.recv(4096)
+    try:
+        response = json.loads(data.decode("utf-8"))
+        print(response)
+        return response
+    except json.JSONDecodeError:
+        print("json error")
 
 
 def send(data: dict):
@@ -26,16 +24,37 @@ def send(data: dict):
 
 
 s.connect(("localhost", 48880))
-threading.Thread(target=receive_thread, args=()).start()
 
 send({
-    "type": "register",
+    "type": "login",
     "login": "123",
     "password": "123"
 })
-print("sended")
+status = receive()
 
-run = False
+send({
+    "type": "play",
+    "char_id": status["data"]["chars"][0][0]
+})
+receive()
+
+send({
+    "type": "find"
+})
+receive()
+
+
+
+
+send({
+    "type": "leave"
+})
+receive()
+
+
+
+send({
+    "type": "logout"
+})
+
 s.close()
-
-
