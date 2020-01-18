@@ -14,7 +14,6 @@ class LoginScene(Scene):
         self.sprites = pygame.sprite.Group()
 
         self.login, self.password, self.login_button, self.status = None, None, None, None
-        self.login_button, self.register_button, self.quit_button = None, None, None
         self.init_ui()
 
         @self.api.on("login")
@@ -95,11 +94,11 @@ class LoginScene(Scene):
                         #self.api.login(self.login.text, self.api.hash_password(self.password.text))
                         self.account["login"] = 'MrEluzium'
                         self.account["password"] = self.api.hash_password(self.password.text)
-                        backup = [{'id': 1, 'name': '0', 'class': '0',
+                        self.account["chars"] = [{'id': 1, 'name': '0', 'class': '0',
                                                   'rank': 0,  'blacklist': 0, 'money':  0},
                                                  {'id': 2, 'name': '0', 'class': '0',
                                                   'rank': 0,  'blacklist': 0, 'money':  0}]
-                        self.account["chars"] = [{'id': 0, 'name': 'Кабанчик Рома', 'class': 'Вор в законе',
+                        backup = [{'id': 0, 'name': 'Кабанчик Рома', 'class': 'Вор в законе',
                                                   'rank': 3, 'blacklist': 3, 'money': 100},
                                                  {'id': 1, 'name': 'Михетт', 'class': 'Росгвардеец',
                                                   'rank': 8, 'blacklist': 5, 'money': 750},
