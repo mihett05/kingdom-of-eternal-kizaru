@@ -40,18 +40,22 @@ class Game:
         self.data["ui"] = self.ui
 
         self.clock = pygame.time.Clock()
+        self.data["clock"] = self.clock
+
+        self.fps = 60
+        self.data["fps"] = self.fps
 
         self.scene = SceneManager()
         self.data["scene"] = self.scene
 
     @staticmethod
-    def load_image(name, colorkey=None):
+    def load_image(name, color_key=None):
         try:
             fullname = os.path.join('data', name)
             image = pygame.image.load(fullname)
-            if not colorkey:
+            if not color_key:
                 color_key = image.get_at((0, 0))
-            if colorkey != 'NO':
+            if color_key != 'NO':
                 image.set_colorkey(color_key)
             return image
         except pygame.error:

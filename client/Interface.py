@@ -36,7 +36,7 @@ class Interface:
     def init_ui(self):
         if self.scene_manager.name == "Game":
             self.inventory_button = self.new_element(pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect(10, 10, 80, 30),
+                relative_rect=pygame.Rect(self.screen.get_width() - 10 - 80, 10, 80, 30),
                 text="Инвентарь",
                 manager=self.ui
             ))
@@ -45,7 +45,8 @@ class Interface:
         if self.scene_manager.name == "Game":
             if event.type == pygame.USEREVENT:
                 if event.ui_element == self.inventory_button:
-                    Inventory()
+                    if Inventory._instance is None:
+                        Inventory()
 
 
 
