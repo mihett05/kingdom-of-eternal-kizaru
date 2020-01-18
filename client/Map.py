@@ -32,7 +32,9 @@ class Map:
                 color_key = image.get_at((0, 0))
             if color_key != 'NO':
                 image.set_colorkey(color_key)
-            return pygame.transform.scale(image, (self.view["block"]["width"], self.view["block"]["height"]))
+            return pygame.transform.scale(image, (
+                self.data["screen"].get_width() // 25,
+                self.data["screen"].get_height() // 14))
         except pygame.error:
             print("Can't load image cache/{}/sprites/{}".format(map_name, name))
             return pygame.image.load(os.path.join("data", "default.png")).convert()
