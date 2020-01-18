@@ -2,7 +2,7 @@ import os
 import pygame
 import pygame_gui
 import threading
-from client.LoginScene import LoginScene
+from client.Scenes import LoginScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
@@ -16,8 +16,15 @@ class Game:
 
         self.data["load_image"] = self.load_image
         self.data["account"] = dict()
-        #self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        self.screen = pygame.display.set_mode((800, 800))
+        self.isfullscreen = False
+        if self.isfullscreen:
+            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((1600, 900))
+        pygame.display.set_caption("Kingdom of Eternal Kizaru")
+        icon = pygame.image.load('data/icon.png')
+        pygame.display.set_icon(icon)
+        self.sprites = pygame.sprite.Group()
         self.data.set("screen", self.screen)
 
         with open("server.txt", "r") as f:
@@ -33,17 +40,27 @@ class Game:
         self.data["ui"] = self.ui
 
         self.clock = pygame.time.Clock()
+        self.data["clock"] = self.clock
+
+        self.fps = 60
+        self.data["fps"] = self.fps
 
         self.scene = SceneManager()
         self.data["scene"] = self.scene
 
     @staticmethod
-    def load_image(name):
+    def load_image(name, color_key=None):
         try:
-            return pygame.image.load(os.path.join("data", name)).convert()
+            fullname = os.path.join('data', name)
+            image = pygame.image.load(fullname)
+            if not color_key:
+                color_key = image.get_at((0, 0))
+            if color_key != 'NO':
+                image.set_colorkey(color_key)
+            return image
         except pygame.error:
             print("Can't load image data/{}".format(name))
-            return pygame.image.load(os.path.join("data", "default.png")).convert().convertAlpha()
+            return pygame.image.load(os.path.join("data", "default.png")).convert()
 
     def draw(self):
         if self.screen is not None:
@@ -58,7 +75,7 @@ class Game:
             pygame.display.flip()
 
     def run(self):
-        self.api.connect()
+        #self.api.connect()
         threading.Thread(target=self.api.receive_thread).start()
         threading.Thread(target=self.api.broadcast_thread).start()
         run = True
@@ -68,18 +85,17 @@ class Game:
                 if event.type == pygame.QUIT:
                     run = False
                 elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
-                    if event.mod == pygame.KMOD_ALT:
-                        pass
-                    elif event.mod & pygame.K_F4:
+                    if event.key == pygame.K_F4:
                         run = False
                 self.ui.process_events(event)
                 self.scene.scene.process_events(event)
             self.draw()
+            self.clock.tick(self.fps)
             try:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
-        self.api.logout()
-        self.api.close()
+        #self.api.logout()
+        #self.api.close()
         pygame.quit()
 
