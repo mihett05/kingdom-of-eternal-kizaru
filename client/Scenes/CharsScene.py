@@ -39,14 +39,9 @@ class CharsScene(Scene):
         self.init_ui()
 
     def char_info_load(self, char_id):
-        char, char_exist = None, None
-        for i in self.account["chars"]:
-            if i['id'] == char_id:
-                char = i
-                char_exist = True
-                break
-            char_exist = False
-        return char, char_exist
+        if char_id < len(self.account["chars"]):
+            return self.account["chars"][char_id], True
+        return None, False
 
     def load_slot_one(self):
         char, self.first_char_is_exist = self.char_info_load(0)

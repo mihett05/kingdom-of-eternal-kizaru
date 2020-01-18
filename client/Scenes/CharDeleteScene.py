@@ -17,11 +17,9 @@ class CharDeleteScene(Scene):
         self.account_font = pygame.font.Font('data/AtariRevue.ttf', 26)
         self.mainfont = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 26.3))
         char_id = self.account["chosen_char_id"]
-        for i in self.account["chars"]:
-            if i['id'] == char_id:
-                self.char = i
-                self.char_inlist_place = self.account["chars"].index(i)
-                break
+        if char_id < len(self.account["chars"]):
+            self.char = self.account["chars"][char_id]
+            self.char_inlist_place = char_id
         self.init_ui()
 
     @staticmethod
