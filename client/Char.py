@@ -1,45 +1,56 @@
 import pygame
 import os
 from client.AppData import AppData
+from client.AnimatedSprite import AnimatedSprite
 
 
 class Char:
     def __init__(self):
         self.group = pygame.sprite.Group()
         self.data = AppData()
-        self.sprite = pygame.sprite.Sprite(self.group)
-        self.sprite.image = None
-        self.set_side("left")
-        self.sprite.rect = self.sprite.image.get_rect()
-        self.sprite.rect.x = 256
-        self.sprite.rect.y = 512
-        self.sprite.rect.w = 48
-        self.sprite.rect.h = 48
         self.default_speed = 3
+        scale = (
+                int((self.data["screen"].get_width() // 25) * 0.75),
+                int((self.data["screen"].get_height() // 14) * 0.75)
+        )
+        self.sprites = {
+            "up": AnimatedSprite((), self.load_image("sprites/char/up.png"), 1, 1, 128, 320, scale, "up"),
+            "left": AnimatedSprite((), self.load_image("sprites/char/left.png"), 3, 1, 128, 320, scale, "left"),
+            "down": AnimatedSprite((), self.load_image("sprites/char/down.png"), 3, 1, 128, 320, scale, "down"),
+            "right": AnimatedSprite((), self.load_image("sprites/char/right.png"), 3, 1, 128, 320, scale, "right"),
+            "up_run": AnimatedSprite((), self.load_image("sprites/char/up_run.png"), 10, 1, 128, 320, scale,
+                                     "up_run", False),
+            "left_run": AnimatedSprite((), self.load_image("sprites/char/left_run.png"), 10, 1, 128, 320, scale,
+                                       "left_run", False),
+            "down_run": AnimatedSprite((), self.load_image("sprites/char/down_run.png"), 10, 1, 128, 320, scale,
+                                       "down_run", False),
+            "right_run": AnimatedSprite((), self.load_image("sprites/char/right_run.png"), 10, 1, 128, 320, scale,
+                                        "right_run", False)
+        }
+        self.sprite = self.sprites["down"].clone(self.group)
+        self.side = None
+        self.can_go_next = True
+        self.x = 64
+        self.y = 320
 
-    def load_sprite(self, side, color_key=None):
+    @staticmethod
+    def load_image(name, scale_size=None, color_key=None):
         try:
-            image = pygame.image.load(os.path.join("data", "sprites", f"char{('_' + side) if side else ''}.png"))
+            fullname = os.path.join('data', name)
+            image = pygame.image.load(fullname)
             if not color_key:
                 color_key = image.get_at((0, 0))
             if color_key != 'NO':
                 image.set_colorkey(color_key)
-            return pygame.transform.scale(image, (self.data["block"]["width"], self.data["block"]["height"]))
+            if scale_size is not None:
+                return pygame.transform.scale(image, scale_size)
+            return image
         except pygame.error:
-            print("Can't load image data/sprites/char{}.png".format(('_' + side) if side else ''))
+            print("Can't load image data/{}".format(name))
             return pygame.image.load(os.path.join("data", "default.png")).convert()
 
-    def set_side(self, side: str):
-        if side == "left":
-            self.sprite.image = self.load_sprite("l")
-        elif side == "right":
-            self.sprite.image = self.load_sprite("r")
-        elif side == "up":
-            self.sprite.image = self.load_sprite("u")
-        elif side == "down":
-            self.sprite.image = self.load_sprite("")
-
     def draw(self):
+        self.sprite.update()
         self.moving()
         self.group.draw(self.data["screen"])
 
@@ -55,49 +66,77 @@ class Char:
                 return sprite
         return False
 
+    def update_sprite(self, name):
+        if name in self.sprites:
+            if self.sprite is not None:
+                if not self.sprite.name == name:
+                    self.group.empty()
+                    self.sprite = self.sprites[name].clone(self.group)
+            else:
+                self.group.empty()
+                self.sprite = self.sprites[name].clone(self.group)
+
     def moving(self):
+        self.can_go_next = False
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            self.set_side("up")
+            self.side = "up"
             if self.moving_check_for_ability(pygame.Rect(
-                self.sprite.rect.x,
-                self.sprite.rect.y - self.default_speed,
+                self.x,
+                self.y - self.default_speed,
                 self.sprite.rect.w,
                 self.sprite.rect.h
             )):
-                self.sprite.rect.y -= self.default_speed  # Fuck pygame(говно) преобразует все значения в int
+                self.y -= self.default_speed  # Fuck pygame(говно) преобразует все значения в int
+                self.can_go_next = True
+
         if keys[pygame.K_a]:
-            self.set_side("left")
+            self.side = "left"
             if self.moving_check_for_ability(pygame.Rect(
-                    self.sprite.rect.x - self.default_speed,
-                    self.sprite.rect.y,
+                    self.x - self.default_speed,
+                    self.y,
                     self.sprite.rect.w,
                     self.sprite.rect.h
             )):
-                self.sprite.rect.x -= self.default_speed  # Следовательно к time привязать не получилось
+                self.x -= self.default_speed  # Следовательно к time привязать не получилось
+                self.can_go_next = True
+
         if keys[pygame.K_s]:
-            self.set_side("down")
+            self.side = "down"
             if self.moving_check_for_ability(pygame.Rect(
-                    self.sprite.rect.x,
-                    self.sprite.rect.y + self.default_speed,
+                    self.x,
+                    self.y + self.default_speed,
                     self.sprite.rect.w,
                     self.sprite.rect.h
             )):
-                self.sprite.rect.y += self.default_speed
+                self.y += self.default_speed
+                self.can_go_next = True
+
         if keys[pygame.K_d]:
-            self.set_side("right")
+            self.side = "right"
             if self.moving_check_for_ability(pygame.Rect(
-                    self.sprite.rect.x + self.default_speed,
-                    self.sprite.rect.y,
+                    self.x + self.default_speed,
+                    self.y,
                     self.sprite.rect.w,
                     self.sprite.rect.h
             )):
-                self.sprite.rect.x += self.default_speed
+                self.x += self.default_speed
+                self.can_go_next = True
+
+        if keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_s] or keys[pygame.K_d]:
+            self.update_sprite(self.side + ("_run" if self.can_go_next else ""))
+        else:
+            self.update_sprite(self.side)
+
         teleport = self.check_for_teleport()
         if teleport:
             self.data["map_manager"].set_map(teleport.map_path)
-            self.sprite.rect.x = 256
-            self.sprite.rect.y = 512
+            self.x = 64
+            self.y = 320
+
+        if self.sprite is not None:
+            self.sprite.rect.x = self.x
+            self.sprite.rect.y = self.y
 
     def process_event(self, event):
         pass

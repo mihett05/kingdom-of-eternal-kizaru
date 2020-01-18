@@ -90,6 +90,7 @@ class Game:
                 self.ui.process_events(event)
                 self.scene.scene.process_events(event)
             self.draw()
+            self.clock.tick(self.fps)
             try:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
