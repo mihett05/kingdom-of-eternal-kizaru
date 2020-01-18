@@ -16,12 +16,15 @@ class SceneManager:
             self.name = None
             self.proto = None
             self.data = AppData()
+            self.dumps = dict()
             self.ui = self.data["ui"]
             self.queue = []
             self.scene = None
             self.last = None
 
-    def change(self, name, proto):
+    def change(self, name, proto, make_dump=False):
+        if make_dump:
+            self.dumps[name] = proto
         self.name = name
         self.last = self.proto
         self.proto = proto
@@ -29,5 +32,3 @@ class SceneManager:
         if self.scene is not None:
             self.scene.clear()
         self.scene = proto()
-
-
