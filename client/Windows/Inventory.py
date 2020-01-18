@@ -4,6 +4,13 @@ from client.AppData import AppData
 
 
 class Inventory(pygame_gui.core.UIWindow):
+    _instance = None  # Singleton
+
+    def __new__(cls):
+        if Inventory._instance is None:
+            Inventory._instance = super(Inventory, cls).__new__(cls)
+        return Inventory._instance
+
     def __init__(self):
         self.data = AppData()
         super().__init__(
@@ -40,7 +47,7 @@ class Inventory(pygame_gui.core.UIWindow):
 
     def init_ui(self):
         self.get_container().image = pygame.transform.scale(
-            self.data["load_image"]("window.jpg"), self.get_container().rect.size
+            self.data["load_image"]("window.jpg", 255), self.get_container().rect.size
         )
 
         self.close_button = pygame_gui.elements.UIButton(
@@ -208,6 +215,10 @@ class Inventory(pygame_gui.core.UIWindow):
             parent_element=self,
             html_text=""
         )
+
+    def kill(self):
+        super().kill()
+        Inventory._instance = None
 
     def process_event(self, event: pygame.event.Event):
         if event.type == pygame.USEREVENT:
