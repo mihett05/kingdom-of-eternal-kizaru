@@ -2,7 +2,7 @@ import os
 import pygame
 import pygame_gui
 import threading
-from client.LoginScene import LoginScene
+from client.Scenes import LoginScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
@@ -16,7 +16,7 @@ class Game:
 
         self.data["load_image"] = self.load_image
         self.data["account"] = dict()
-        self.isfullscreen = 1
+        self.isfullscreen = False
         if self.isfullscreen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
@@ -40,18 +40,22 @@ class Game:
         self.data["ui"] = self.ui
 
         self.clock = pygame.time.Clock()
+        self.data["clock"] = self.clock
+
+        self.fps = 60
+        self.data["fps"] = self.fps
 
         self.scene = SceneManager()
         self.data["scene"] = self.scene
 
     @staticmethod
-    def load_image(name, colorkey=None):
+    def load_image(name, color_key=None):
         try:
             fullname = os.path.join('data', name)
             image = pygame.image.load(fullname)
-            if not colorkey:
+            if not color_key:
                 color_key = image.get_at((0, 0))
-            if colorkey != 'NO':
+            if color_key != 'NO':
                 image.set_colorkey(color_key)
             return image
         except pygame.error:
@@ -71,7 +75,7 @@ class Game:
             pygame.display.flip()
 
     def run(self):
-        self.api.connect()
+        #self.api.connect()
         threading.Thread(target=self.api.receive_thread).start()
         threading.Thread(target=self.api.broadcast_thread).start()
         run = True
@@ -86,11 +90,12 @@ class Game:
                 self.ui.process_events(event)
                 self.scene.scene.process_events(event)
             self.draw()
+            self.clock.tick(self.fps)
             try:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
-        self.api.logout()
-        self.api.close()
+        #self.api.logout()
+        #self.api.close()
         pygame.quit()
 

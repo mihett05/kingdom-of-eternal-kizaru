@@ -1,0 +1,27 @@
+{
+	"block": {
+		"width": 64,
+		"height": 64
+	},
+	"sprites": {
+		"g": "grass.png",
+		"w": "water.png",
+		"f": "forest_glade.png",
+		"c": "cave.png",
+		"_": "forest_horizont_texture.png",
+		"|": "forest_vertical_texture.png",
+		"1": "forest_left_up_texture.png",
+		"2": "forest_right_up_texture.png",
+		"3": "forest_left_down_texture.png",
+		"4": "forest_right_down_texture.png",
+		"r": "trail_horizontally.png",
+		"`": "road.png"
+	},
+	"blocks_blockers": [
+		"w", "c", "f", "|", "_", "1", "2", "3", "4"
+	],
+	"blocks_teleports": [],
+	"teleports": {
+		"`": "city.zip"
+	} 
+}
