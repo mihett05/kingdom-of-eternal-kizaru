@@ -4,6 +4,7 @@ import os
 import sys
 from client.Scene import Scene
 from client.Scenes.CharMakerScene import CharMakerScene
+from client.Scenes.BattleScene import BattleScene
 from client.Scenes import CharDeleteScene
 from client.Scenes.GameScene import GameScene
 
@@ -14,7 +15,9 @@ class CharsScene(Scene):
         Scene.__init__(self)
         self.sprites = pygame.sprite.Group()
         self.char_info_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 38.4))
-        self.login, self.password, self.login_button, self.status = None, None, None, None
+        self.font = pygame.font.Font('data/AtariRevue.ttf', 26)
+        self.quit_button, self.back_button = None, None
+        self.status, self.logined_account = None, None
 
         self.first_char_is_exist = False
         self.first_char_play_button, self.first_char_delete_button, self.first_char_create_button = None, None, None
@@ -153,7 +156,6 @@ class CharsScene(Scene):
             manager=self.ui,
             text="Назад"
         ))
-        self.font = pygame.font.Font('data/AtariRevue.ttf', 26)
         self.logined_account = self.font.render("Аккаунт: {}".format(self.account["login"]), False, (0, 0, 0))
 
     def draw(self):
@@ -199,8 +201,18 @@ class CharsScene(Scene):
                     if event.ui_element == self.quit_button:
                         pygame.quit()
                         sys.exit(0)
+                        self.scene_manager.change("Battle", BattleScene)
                     elif event.ui_element == self.back_button:
                         self.scene_manager.change("MainMenu", self.scene_manager.dumps["MainMenu"])
+                    elif event.ui_element == self.first_char_play_button:
+                        self.account["chosen_char_id"] = 0
+                        self.scene_manager.change("Battle", BattleScene)
+                    elif event.ui_element == self.second_char_play_button:
+                        self.account["chosen_char_id"] = 1
+                        self.scene_manager.change("Battle", BattleScene)
+                    elif event.ui_element == self.third_char_play_button:
+                        self.account["chosen_char_id"] = 2
+                        self.scene_manager.change("Battle", BattleScene)
                     elif event.ui_element == self.first_char_delete_button:
                         self.account["chosen_char_id"] = 0
                         self.scene_manager.change("CharDelete", CharDeleteScene)
