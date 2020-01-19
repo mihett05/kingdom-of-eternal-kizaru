@@ -1,7 +1,8 @@
 import os
+import sys
+import threading
 import pygame
 import pygame_gui
-import threading
 from client.Scenes import LoginScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
@@ -12,6 +13,7 @@ from client.SceneManager import SceneManager
 class Game:
     def __init__(self):
         pygame.init()
+        self.running = True
         self.data = AppData()
 
         self.data["load_image"] = self.load_image
@@ -48,6 +50,10 @@ class Game:
         self.scene = SceneManager()
         self.data["scene"] = self.scene
 
+        self.data["close"] = self.close
+        self.receive_thread = threading.Thread(target=self.api.receive_thread)
+        self.broadcast_thread = threading.Thread(target=self.api.broadcast_thread)
+
     @staticmethod
     def load_image(name, color_key=None):
         try:
@@ -62,6 +68,15 @@ class Game:
             print("Can't load image data/{}".format(name))
             return pygame.image.load(os.path.join("data", "default.png")).convert()
 
+    def close(self):
+        pygame.quit()
+        self.api.logout()
+        self.api.close()
+        self.receive_thread.join()
+        self.broadcast_thread.join()
+        self.running = False
+        sys.exit(0)
+
     def draw(self):
         if self.screen is not None:
             self.screen.fill((0, 0, 0))
@@ -75,18 +90,17 @@ class Game:
             pygame.display.flip()
 
     def run(self):
-        #self.api.connect()
-        threading.Thread(target=self.api.receive_thread).start()
-        threading.Thread(target=self.api.broadcast_thread).start()
-        run = True
+        self.api.connect()
+        self.receive_thread.start()
+        self.broadcast_thread.start()
         self.scene.change("login", LoginScene)
-        while run:
+        while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
+                    self.running = False
                 elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                     if event.key == pygame.K_F4:
-                        run = False
+                        self.running = False
                 self.ui.process_events(event)
                 self.scene.scene.process_events(event)
             self.draw()
@@ -95,7 +109,7 @@ class Game:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
-        #self.api.logout()
-        #self.api.close()
+        self.api.logout()
+        self.api.close()
         pygame.quit()
 

@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from .User import User
-from .RealItem import RealItem
 
 Base = declarative_base()
 
@@ -19,13 +18,6 @@ class Char(Base):
     strength = Column(Integer, default=1)
     agility = Column(Integer, default=1)
     smart = Column(Integer, default=1)
-
-    head = Column(Integer, ForeignKey(RealItem.id))
-    body = Column(Integer, ForeignKey(RealItem.id))
-    legs = Column(Integer, ForeignKey(RealItem.id))
-    boots = Column(Integer, ForeignKey(RealItem.id))
-
-    weapon = Column(Integer, ForeignKey(RealItem.id))
 
     def __init__(self, name, lvl, rank, user_id, balance, class_name, race, strength, agility, smart):
         self.name = name

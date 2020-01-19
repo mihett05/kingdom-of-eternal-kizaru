@@ -23,6 +23,7 @@ class Server:
         models.Item.metadata.create_all(self.engine)
         models.RealItem.metadata.create_all(self.engine)
         models.Skill.metadata.create_all(self.engine)
+        models.Worn.metadata.create_all(self.engine)
         self.logged = dict()
         self.loop = None
         self.finders = set()

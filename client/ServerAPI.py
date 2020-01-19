@@ -32,25 +32,31 @@ class ServerAPI:
         """
         Thread with receiving data from server
         """
-        while self.connected:
-            data = self.socket.recv(4096)
-            try:
-                response = json.loads(data.decode("utf-8"))
-                response_type = response["type"]
-                if response_type in self._listeners:
-                    for callback in self._listeners[response_type]:
-                        callback(response)
-            except json.JSONDecodeError:
-                pass
+        try:
+            while self.connected:
+                data = self.socket.recv(4096)
+                try:
+                    response = json.loads(data.decode("utf-8"))
+                    response_type = response["type"]
+                    if response_type in self._listeners:
+                        for callback in self._listeners[response_type]:
+                            callback(response)
+                except json.JSONDecodeError:
+                    pass
+        except ConnectionAbortedError:
+            pass
 
     def broadcast_thread(self):
         """
         Thread with sending data to server
         """
-        while self.connected:
-            if len(self._requests_queue) > 0:
-                request = self._requests_queue.pop(0)
-                self.socket.send(request.encode("utf-8"))
+        try:
+            while self.connected:
+                if len(self._requests_queue) > 0:
+                    request = self._requests_queue.pop(0)
+                    self.socket.send(request.encode("utf-8"))
+        except OSError:
+            pass
 
     def on(self, resp_type):
         """

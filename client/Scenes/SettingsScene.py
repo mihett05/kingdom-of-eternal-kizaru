@@ -61,5 +61,4 @@ class SettingsScene(Scene):
                     if event.ui_element == self.back_button:
                         self.scene_manager.change("MainMenu", self.scene_manager.dumps["MainMenu"])
                     elif event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                        self.data["close"]()

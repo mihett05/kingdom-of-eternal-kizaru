@@ -99,5 +99,4 @@ class RegisterScene(Scene):
                     elif event.ui_element == self.back_button:
                         self.scene_manager.change("login", self.scene_manager.last)
                     elif event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                        self.data["close"]()

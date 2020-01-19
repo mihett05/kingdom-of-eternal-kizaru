@@ -111,5 +111,4 @@ class CharMakerScene(Scene):
                     if event.ui_element == self.back_button:
                         self.scene_manager.change("CharsScene", self.scene_manager.last)
                     elif event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                        self.data["close"]()
