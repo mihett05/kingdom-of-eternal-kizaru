@@ -1,5 +1,6 @@
 import pygame
 import os
+import math
 from client.AppData import AppData
 from client.AnimatedSprite import AnimatedSprite
 
@@ -8,10 +9,10 @@ class Char:
     def __init__(self):
         self.group = pygame.sprite.Group()
         self.data = AppData()
-        self.default_speed = 3
+        self.default_speed = math.ceil(self.data["screen"].get_width() / 400)
         scale = (
-                int((self.data["screen"].get_width() // 25) * 0.75),
-                int((self.data["screen"].get_height() // 14) * 0.75)
+                (self.data["screen"].get_width() // 25) // 4 * 3,
+                (self.data["screen"].get_height() // 14) // 4 * 3
         )
         self.sprites = {
             "up": AnimatedSprite((), self.load_image("sprites/char/up.png"), 1, 1, 128, 320, scale, "up"),
@@ -30,8 +31,8 @@ class Char:
         self.sprite = self.sprites["down"].clone(self.group)
         self.side = None
         self.can_go_next = True
-        self.x = 64
-        self.y = 320
+        self.x = self.data["map_manager"].map.spawn_point[0] * self.data["map_manager"].map.width
+        self.y = self.data["map_manager"].map.spawn_point[1] * self.data["map_manager"].map.height
 
     @staticmethod
     def load_image(name, scale_size=None, color_key=None):
@@ -90,17 +91,6 @@ class Char:
                 self.y -= self.default_speed  # Fuck pygame(говно) преобразует все значения в int
                 self.can_go_next = True
 
-        if keys[pygame.K_a]:
-            self.side = "left"
-            if self.moving_check_for_ability(pygame.Rect(
-                    self.x - self.default_speed,
-                    self.y,
-                    self.sprite.rect.w,
-                    self.sprite.rect.h
-            )):
-                self.x -= self.default_speed  # Следовательно к time привязать не получилось
-                self.can_go_next = True
-
         if keys[pygame.K_s]:
             self.side = "down"
             if self.moving_check_for_ability(pygame.Rect(
@@ -110,6 +100,17 @@ class Char:
                     self.sprite.rect.h
             )):
                 self.y += self.default_speed
+                self.can_go_next = True
+
+        if keys[pygame.K_a]:
+            self.side = "left"
+            if self.moving_check_for_ability(pygame.Rect(
+                    self.x - self.default_speed,
+                    self.y,
+                    self.sprite.rect.w,
+                    self.sprite.rect.h
+            )):
+                self.x -= self.default_speed  # Следовательно к time привязать не получилось
                 self.can_go_next = True
 
         if keys[pygame.K_d]:
@@ -131,8 +132,8 @@ class Char:
         teleport = self.check_for_teleport()
         if teleport:
             self.data["map_manager"].set_map(teleport.map_path)
-            self.x = 64
-            self.y = 320
+            self.x = self.data["map_manager"].map.spawn_point[0] * self.data["map_manager"].map.width
+            self.y = self.data["map_manager"].map.spawn_point[1] * self.data["map_manager"].map.height
 
         if self.sprite is not None:
             self.sprite.rect.x = self.x

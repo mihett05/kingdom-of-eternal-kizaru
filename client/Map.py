@@ -19,6 +19,9 @@ class Map:
         self.blockers = pygame.sprite.Group()
         self.teleports = pygame.sprite.Group()
         self.is_active = True
+        self.spawn_point = (0, 0)
+        self.width = self.data["screen"].get_width() // 25
+        self.height = self.data["screen"].get_height() // 14
 
         if zipfile.is_zipfile(self.path):
             self.load()
@@ -33,8 +36,9 @@ class Map:
             if color_key != 'NO':
                 image.set_colorkey(color_key)
             return pygame.transform.scale(image, (
-                self.data["screen"].get_width() // 25,
-                self.data["screen"].get_height() // 14))
+                self.width,
+                self.height)
+            )
         except pygame.error:
             print("Can't load image cache/{}/sprites/{}".format(map_name, name))
             return pygame.image.load(os.path.join("data", "default.png")).convert()
@@ -66,6 +70,7 @@ class Map:
                     )
                     if teleport:
                         self.blocks[key].set_teleport(self.view["teleports"][key])
+                self.spawn_point = tuple(self.view["spawn"])
 
     def draw(self):
         if self.is_active:
@@ -73,12 +78,11 @@ class Map:
             self.blockers.empty()
 
             self.sprites.empty()
-            width, height = self.view["block"]["width"], self.view["block"]["height"]
             for h, line in enumerate(self.map):
                 for w, char in enumerate(line):
                     self.blocks[char].create(
-                        x=w * width,
-                        y=h * height
+                        x=w * self.width,
+                        y=h * self.height
                     )
             self.sprites.draw(self.data["screen"])
 

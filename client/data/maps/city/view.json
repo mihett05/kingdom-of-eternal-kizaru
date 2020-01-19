@@ -7,7 +7,7 @@
 		"g": "grass.png",
 		"w": "water.png",
 		"f": "forest_glade.png",
-		"c": "cave.png",
+		"c": "city.png",
 		"_": "forest_horizont_texture.png",
 		"|": "forest_vertical_texture.png",
 		"1": "forest_left_up_texture.png",
@@ -23,5 +23,6 @@
 	"blocks_teleports": [],
 	"teleports": {
 		"`": "forest.zip"
-	} 
+	},
+	"spawn": [1, 6]
 }

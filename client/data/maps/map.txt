@@ -1,8 +1,8 @@
 1_______________________2
 |ggggggggggggggggggggggg|
-|gwwwggggggggggggggggggg|
-|gwcwggggggggggggggggggg|
-|gwgwggggggggggggggggggg|
+|ggggggggggggggggggggggg|
+|g5c6ggggggggggggggggggg|
+|ggggggggggggggggggggggg|
 |ggggggggrrrrrrrrrrrrrrr`
 |gggggggggggggggggggggrr`
 |ggggggggggggggggggggggg|
