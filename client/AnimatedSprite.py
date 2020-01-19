@@ -16,7 +16,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.cur_frame = 0
         self.image = self.frameslist[self.cur_frame]
         self.count = 0
-        self.need_count = 20 if is_slow else 5
+        self.need_count = 20 if is_slow else 2
         self.rect = self.rect.move(x, y)
         if scale is not None:
             self.rect.w = scale[0]

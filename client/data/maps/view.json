@@ -7,7 +7,9 @@
 		"g": "grass.png",
 		"w": "water.png",
 		"f": "forest_glade.png",
-		"c": "cave.png",
+		"c": "cave_middle.png",
+		"5": "cave_left.png",
+		"6": "cave_right.png",
 		"_": "forest_horizont_texture.png",
 		"|": "forest_vertical_texture.png",
 		"1": "forest_left_up_texture.png",
@@ -18,10 +20,12 @@
 		"`": "road.png"
 	},
 	"blocks_blockers": [
-		"w", "c", "f", "|", "_", "1", "2", "3", "4"
+		"w", "c", "f", "|", "_", "1", "2", "3", "4",
+		"5", "6"
 	],
 	"blocks_teleports": [],
 	"teleports": {
 		"`": "city.zip"
-	} 
+	},
+	"spawn": [1, 5]
 }
