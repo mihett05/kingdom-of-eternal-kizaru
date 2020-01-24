@@ -18,7 +18,7 @@ class Game:
 
         self.data["load_image"] = self.load_image
         self.data["account"] = dict()
-        self.isfullscreen = True
+        self.isfullscreen = False
         if self.isfullscreen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
@@ -109,7 +109,5 @@ class Game:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
-        self.api.logout()
-        self.api.close()
-        pygame.quit()
+        self.close()
 

@@ -63,9 +63,7 @@ class Connection:
             logged[self.adr] = self
             self.char_list = self.get_chars()
             await self.response("login", {
-                "data": {
-                    "chars": self.char_list
-                }
+                "chars": self.char_list
             })
         else:
             await self.send_err("login", "Invalid login or password")
@@ -101,7 +99,7 @@ class Connection:
     async def create_char(self, request):
         if isinstance(self.user, models.User):
             if self.session.query(models.Char).filter_by(name=request["name"]).first() is None:
-                self.session.add(models.Char(
+                char = models.Char(
                     name=request["name"],
                     lvl=1,
                     rank=1,
@@ -112,16 +110,33 @@ class Connection:
                     strength=1,
                     agility=1,
                     smart=1
-                ))
+                )
+                self.session.add(char)
                 self.session.commit()
                 self.char_list = self.get_chars()
                 await self.response("create_char", {
+                    "id": char.id,
                     "chars": self.char_list
                 })
             else:
                 await self.send_err("create_char", "Name is not available")
         else:
             await self.send_err("create_char", "You didn't login in account")
+
+    async def delete_char(self, request):
+        if isinstance(self.user, models.User):
+            char = self.session.query(models.Char).filter_by(id=request["id"]).first()
+            if char is not None:
+                self.session.delete(char)
+                self.session.commit()
+                self.char_list = self.get_chars()
+                await self.response("delete_char", {
+                    "chars": self.char_list
+                })
+            else:
+                await self.send_err("delete_char", "Char wasn't created")
+        else:
+            await self.send_err("delete_char", "You didn't login in account")
 
     async def get_inventory(self):
         if self.user is not None and self.char is not None:
@@ -146,7 +161,7 @@ class Connection:
             real_item = self.session.query(models.RealItem).filter_by(id=request["real_item_id"]).first()
             if real_item is not None:
                 price = self.session.query(models.Item).filter_by(id=real_item.item_id).first().price
-                self.char.balance += price
+                self.char.balance += price * 0.75  # 3/4 of buyer's price
                 self.session.delete(real_item)
                 self.session.commit()
             else:

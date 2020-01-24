@@ -16,16 +16,18 @@ class RegisterScene(Scene):
         self.register_button, self.quit_button, self.back_button = None, None, None
         self.init_ui()
 
-        @self.api.on("login")
-        def login(data):
+        @self.api.on("register")
+        @self.check
+        def register(data):
             nonlocal self
             if data["status"] == "ok":
                 self.account["login"] = self.login.text
-                self.account["password"] = self.api.hash_password(self.password.text)
-                self.account["chars"] = data["data"]["chars"]
-                self.scene_manager.change("chars", MainMenuScene)
+                self.account["password"] = self.password.text
+                self.account["chars"] = []
+                self.api.login(self.account["login"], self.account["password"])
+                self.scene_manager.change("MainMenu", MainMenuScene, make_dump=True)
             else:
-                self.set_result("Ошибка: Неправильный логин или пароль")
+                self.set_result("Ошибка: Логин занят")
 
     @staticmethod
     def load_image_ins(name):
@@ -94,8 +96,7 @@ class RegisterScene(Scene):
                         elif self.password.text == '' or ' ' in self.password.text:
                             self.set_result('Пароль не может быть пустым или содержать пробел')
                         else:
-                            # Регистрация здесь. Чтоб зарегался и сразу в меню
-                            self.scene_manager.change("MainMenu", MainMenuScene, make_dump=True)
+                            self.api.register(self.login.text, self.password.text)
                     elif event.ui_element == self.back_button:
                         self.scene_manager.change("login", self.scene_manager.last)
                     elif event.ui_element == self.quit_button:

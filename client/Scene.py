@@ -15,6 +15,7 @@ class Scene:
         self.account = self.data["account"]
         self.scene_manager = self.data["scene"]
         self.elements = list()
+        self.name = None
 
     def new_element(self, element):
         self.elements.append(element)
@@ -30,6 +31,15 @@ class Scene:
 
     def process_events(self, event):
         pass
+
+    def check(self, func):
+        def wrapper(*args, **kwargs):
+            nonlocal self
+            if self.scene_manager.name == self.name:
+                return func(*args, **kwargs)
+            else:
+                print(self.scene_manager.name, self.name)
+        return wrapper
 
 
 

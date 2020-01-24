@@ -1,4 +1,5 @@
 from client.AppData import AppData
+from client.Scenes import *
 
 
 class SceneManager:
@@ -16,7 +17,17 @@ class SceneManager:
             self.name = None
             self.proto = None
             self.data = AppData()
-            self.dumps = dict()
+            self.dumps = {
+                "MainMenu": MainMenuScene,
+                "CharsScene": CharsScene,
+                "Settings": SettingsScene,
+                "CharMaker": CharMakerScene,
+                "CharDelete": CharDeleteScene,
+                "Game": GameScene,
+                "Register": RegisterScene,
+                "login": LoginScene,
+                "Battle": BattleScene
+            }
             self.ui = self.data["ui"]
             self.queue = []
             self.scene = None
@@ -32,3 +43,4 @@ class SceneManager:
         if self.scene is not None:
             self.scene.clear()
         self.scene = proto()
+        self.scene.name = name

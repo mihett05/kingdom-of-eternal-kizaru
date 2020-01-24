@@ -15,7 +15,7 @@ class Server:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(self.address)
-        self.socket.listen(10)
+        self.socket.listen(16)
         self.socket.setblocking(False)
         self.engine = create_engine("sqlite:///db.db")
         models.User.metadata.create_all(self.engine)
@@ -67,6 +67,13 @@ class Server:
         """
         try:
             conn = Connection(sock, adr, self.loop, sessionmaker(bind=self.engine))
+            try:
+                if adr in self.logged:
+                    old_conn = self.logged.pop(adr)
+                    if isinstance(old_conn, socket.socket):
+                        old_conn.close()
+            except OSError:
+                pass
             while True:
                 try:
                     data = await self.loop.sock_recv(conn.conn, 4096)
@@ -78,6 +85,7 @@ class Server:
                 except OSError:
                     if adr in self.logged:
                         self.logged.pop(adr)
+                    break
                 else:
                     try:
                         request = json.loads(data.decode("utf-8"))
@@ -106,6 +114,10 @@ class Server:
                         elif request["type"] == "create_char":
                             self.validate(request, ["name", "race", "class_name"])
                             await conn.create_char(request)
+
+                        elif request["type"] == "delete_char":
+                            self.validate(request, ["id"])
+                            await conn.delete_char(request)
 
                         elif request["type"] == "get_inventory":
                             self.validate(request, [])
