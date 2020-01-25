@@ -21,7 +21,7 @@ class Battle:
         }
         self.step = random.randint(0, 1)
 
-    def action(self, conn: Connection, skill: Skill):
+    async def action(self, conn: Connection, skill: Skill):
         player = self.player1 if conn == self.player1["conn"] else\
             self.player2 if conn == self.player2["conn"] else None
         enemy = self.player1 if player == self.player2 else self.player2
@@ -35,14 +35,27 @@ class Battle:
                 enemy["health"] -= enemy["conn"].get_damage(damage)
                 if enemy["health"] <= 0:
                     if callable(self.end_callback):
-                        self.end_callback(player["conn"], enemy["conn"], self)
+                        await self.end_callback(player["conn"], enemy["conn"], self)
+                else:
+                    await conn.response("battle", {
+                        "step": self.__getattribute__("player" + str(self.step + 1))["conn"].char.name,
+                        "player": {
+                            "power": player["power"],
+                            "health": player["health"]
+                        },
+                        "enemy": {
+                            "power": enemy["power"],
+                            "health": enemy["health"]
+                        }
+                    })
+
             else:
                 return "Not enough power"
         else:
             return "Not your step"
 
-    def leave(self, conn: Connection):
+    async def leave(self, conn: Connection):
         enemy = self.player1["conn"] if conn == self.player2["conn"] else self.player2["conn"]\
             if conn == self.player1["conn"] else None
         if enemy is not None:
-            self.end_callback(enemy, conn, self)
+            await self.end_callback(enemy, conn, self)

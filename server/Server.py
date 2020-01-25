@@ -53,12 +53,12 @@ class Server:
         else:
             self.finders.add(conn)
 
-    def end_callback(self, winner: Connection, looser: Connection, battle: Battle):
+    async def end_callback(self, winner: Connection, looser: Connection, battle: Battle):
         print(winner.char, looser.char)
         if winner is not None:
-            asyncio.run_coroutine_threadsafe(winner.win(), self.loop)
+            await winner.win()
         if looser is not None:
-            asyncio.run_coroutine_threadsafe(looser.loose(), self.loop)
+            await looser.loose()
         self.battles.remove(battle)
 
     async def del_finder(self, conn: Connection):
@@ -77,7 +77,7 @@ class Server:
                 if adr in self.logged:
                     old_conn = self.logged.pop(adr)
                     if isinstance(old_conn, socket.socket):
-                        old_conn.close()
+                        await old_conn.close()
             except OSError:
                 pass
             while True:
@@ -86,7 +86,8 @@ class Server:
                     if not data:
                         if adr in self.logged:
                             self.logged.pop(adr)
-                        conn.close()
+                        print(1)
+                        await conn.close()
                         break
                 except OSError:
                     if adr in self.logged:
@@ -152,6 +153,10 @@ class Server:
                         elif request["type"] == "stop_find":
                             self.validate(request, [])
                             await conn.stop_finding(request, self.del_finder)
+
+                        elif request["type"] == "battle_leave":
+                            self.validate(request, [])
+                            await conn.battle_leave(request)
                         else:
                             await conn.send_err("request", "Unknown type")
                     except json.JSONDecodeError:

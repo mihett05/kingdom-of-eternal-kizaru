@@ -17,13 +17,16 @@ class GameScene(Scene):
         self.char = None
         self.audio = AudioManager()
         self.audio.add_track("data/music/iraq.mp3")
-        #self.audio.play("data/music/yvnkxx_kapkan.mp3")
         self.start()
 
         @self.api.on("find")
+        @self.check
         def found(data):
             if data["status"] == "ok":
-                print("battle")
+                self.account["battle_step"] = data["step"]
+                self.account["battle_enemy"] = data["enemy"]
+                self.account["battle_char"] = data["player"]
+                self.scene_manager.change("Battle", self.scene_manager.dumps["Battle"])
             else:
                 print("Network error")
 
@@ -41,6 +44,9 @@ class GameScene(Scene):
         super().clear()
         self.interface.clear()
         self.map_manager.clear_map()
+
+    def resume(self):
+        self.interface.init_ui()
 
     def process_events(self, event):
         if self.scene_manager.name == "Game":

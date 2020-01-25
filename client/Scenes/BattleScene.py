@@ -14,23 +14,43 @@ class BattleScene(Scene):
         self.sprites = pygame.sprite.Group()
 
         self.status = None
-        self.opponent_name = "Orc"
 
         self.char_name_label, self.char_hp_letters_label, self.char_hp_status_label = None, None, None
         self.opponent_name_label, self.opponent_hp_letters_label, self.opponent_hp_status_label = None, None, None
-        self.first_button, self.second_button, self.third_button, self.fourth_button = None, None, None, None
+        self.first_button, self.second_button, self.third_button, self.leave_button = None, None, None, None
         self.status_label = None
 
         self.name_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 32))
         self.hp_letters_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 22))
         self.opponent_name_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 26))
-
-        char_id = self.account["chosen_char_id"]
-        for i in self.account["chars"]:
-            if i['id'] == char_id:
-                self.char = i
-                break
+        self.char = self.account["battle_char"]
+        self.enemy = self.account["battle_enemy"]
+        self.step = self.account["battle_step"]
+        self.opponent_name = self.enemy["name"]
         self.init_ui()
+
+        @self.api.on("result")
+        @self.check
+        def result(data):
+            nonlocal self
+            if data["status"] == "ok":
+                self.account["rank"] = data["rank"]
+                self.scene_manager.change("Game", self.scene_manager.dumps["Game"])
+
+        @self.api.on("battle")
+        @self.check
+        def battle(data):
+            nonlocal self
+            if data["status"] == "ok":
+                self.step = data["step"]
+                self.char = {
+                    **self.char,
+                    **data["player"]
+                }
+                self.enemy = {
+                    **self.enemy,
+                    **data["enemy"]
+                }
 
     @staticmethod
     def load_image_ins(name):
@@ -48,7 +68,7 @@ class BattleScene(Scene):
         self.bg.rect.y = 0
         self.sprites.add(self.bg)
 
-        self.opponent.image = pygame.transform.scale(self.load_image_ins("{}.png".format(self.opponent_name)),
+        self.opponent.image = pygame.transform.scale(self.load_image_ins("icon.png"),
                                                (int(self.size[0] / 4.8), int(self.size[1] / 1.8)))
         self.opponent.rect = self.opponent.image.get_rect()
         self.opponent.rect.x = int(self.size[0] / 1.63)
@@ -64,15 +84,15 @@ class BattleScene(Scene):
 
         self.status = None
 
-        self.char_name_label = self.name_font.render(self.char['name'], False, (31, 55, 41))
+        self.char_name_label = self.name_font.render(self.account["char"]["name"], False, (31, 55, 41))
         self.char_hp_letters_label = self.hp_letters_font.render('HP', False, (31, 55, 41))
-        self.char_hp_status_label = self.hp_letters_font.render('100/100', False, (31, 55, 41))
+        self.char_hp_status_label = self.hp_letters_font.render(f"{self.char['health']}/100", False, (31, 55, 41))
 
         self.opponent_name_label = self.opponent_name_font.render(self.opponent_name, False, (31, 55, 41))
         self.opponent_hp_letters_label = self.hp_letters_font.render('HP', False, (31, 55, 41))
-        self.opponent_hp_status_label = self.hp_letters_font.render('250/250', False, (31, 55, 41))
+        self.opponent_hp_status_label = self.hp_letters_font.render(f"{self.enemy['health']}/{self.enemy['max_health']}", False, (31, 55, 41))
 
-        self.status_label = self.hp_letters_font.render('Текст', False, (31, 55, 41))
+        self.status_label = self.hp_letters_font.render("Шаг: " + self.step, False, (31, 55, 41))
 
         self.first_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 1.52 - 100, self.size[1] / 1.34, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
@@ -86,14 +106,14 @@ class BattleScene(Scene):
             relative_rect=pygame.Rect(self.size[0] / 1.52 - 100, self.size[1] / 1.17, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
             text="Батон III"
         ))
-        self.fourth_button = self.new_element(pygame_gui.elements.UIButton(
+        self.leave_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 1.22 - 100, self.size[1] / 1.17, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
-            text="Батон IV"
+            text="Свалить, пока живой"
         ))
 
     def draw(self):
         self.sprites.draw(self.screen)
-        self.screen.blit(self.char_name_label, (int(self.size[0]) / 6.3 - len(self.char['name']) * int(self.size[0] / 126), int(self.size[1] / 6)))
+        self.screen.blit(self.char_name_label, (int(self.size[0]) / 6.3 - len(self.account["char"]["name"]) * int(self.size[0] / 126), int(self.size[1] / 6)))
         self.screen.blit(self.char_hp_letters_label, (int(self.size[0]) / 15.76, int(self.size[1] / 4.7)))
         self.screen.blit(self.char_hp_status_label, (int(self.size[0]) / 9.3, int(self.size[1] / 4.7)))
 
@@ -110,5 +130,5 @@ class BattleScene(Scene):
         if self.scene_manager.name == "Battle":
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                    pass
-                    # if event.ui_element == self.play_button:
+                    if event.ui_element == self.leave_button:
+                        self.api.battle_leave()

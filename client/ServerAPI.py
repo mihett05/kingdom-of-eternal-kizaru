@@ -207,3 +207,6 @@ class ServerAPI:
 
     def stop_find(self):
         self.request("stop_find")
+        
+    def battle_leave(self):
+        self.request("battle_leave")

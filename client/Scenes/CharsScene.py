@@ -221,14 +221,17 @@ class CharsScene(Scene):
                     elif event.ui_element == self.first_char_play_button:
                         self.account["chosen_char_id"] = 0
                         self.api.play(self.account["chars"][0]["id"])
+                        self.account["char"] = self.account["chars"][0]
                         self.scene_manager.change("Game", GameScene)
 
                     elif event.ui_element == self.second_char_play_button:
                         self.account["chosen_char_id"] = 1
                         self.api.play(self.account["chars"][1]["id"])
+                        self.account["char"] = self.account["chars"][1]
                         self.scene_manager.change("Game", GameScene)
                     elif event.ui_element == self.third_char_play_button:
                         self.account["chosen_char_id"] = 2
                         self.api.play(self.account["chars"][2]["id"])
+                        self.account["char"] = self.account["chars"][2]
                         self.scene_manager.change("Game", GameScene)
 
