@@ -3,6 +3,7 @@ import sys
 import threading
 import pygame
 import pygame_gui
+from time import sleep
 from client.Scenes import LoginScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
@@ -71,6 +72,7 @@ class Game:
     def close(self):
         pygame.quit()
         self.api.logout()
+        sleep(0.25)
         self.api.close()
         self.receive_thread.join()
         self.broadcast_thread.join()

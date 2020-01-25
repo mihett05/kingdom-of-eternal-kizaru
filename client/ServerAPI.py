@@ -201,3 +201,9 @@ class ServerAPI:
         return dict(zip(
             ("id", "name", "class", "rank", "money", "blacklist"), (*char_server_data, 0, 0)
         ))
+
+    def find(self):
+        self.request("find")
+
+    def stop_find(self):
+        self.request("stop_find")

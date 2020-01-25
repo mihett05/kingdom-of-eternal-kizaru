@@ -27,6 +27,7 @@ class Server:
         self.logged = dict()
         self.loop = None
         self.finders = set()
+        self.battles = list()
 
     @staticmethod
     def validate(request, need_keys, fatal=True):
@@ -38,22 +39,27 @@ class Server:
                     return False
         return True
 
-    def add_finder(self, conn: Connection):
+    async def add_finder(self, conn: Connection):
         if len(self.finders) > 0:
             found = min(self.finders, key=lambda x: abs(x.char.rank - conn.char.rank))
             if found.is_finding and found.char is not None and found.user is not None:
                 battle = Battle((found, conn), self.end_callback)
-                asyncio.run_coroutine_threadsafe(found.fight(battle), self.loop)
-                asyncio.run_coroutine_threadsafe(conn.fight(battle), self.loop)
+                self.battles.append(battle)
+                await found.fight(battle, conn)
+                await conn.fight(battle, found)
             else:
                 self.finders.remove(found)
-                self.add_finder(conn)
+                await self.add_finder(conn)
         else:
             self.finders.add(conn)
 
-    def end_callback(self, winner: Connection, looser: Connection):
-        asyncio.run_coroutine_threadsafe(winner.win(), self.loop)
-        asyncio.run_coroutine_threadsafe(looser.loose(), self.loop)
+    def end_callback(self, winner: Connection, looser: Connection, battle: Battle):
+        print(winner.char, looser.char)
+        if winner is not None:
+            asyncio.run_coroutine_threadsafe(winner.win(), self.loop)
+        if looser is not None:
+            asyncio.run_coroutine_threadsafe(looser.loose(), self.loop)
+        self.battles.remove(battle)
 
     async def del_finder(self, conn: Connection):
         if conn in self.finders:
@@ -143,6 +149,9 @@ class Server:
                             self.validate(request, [])
                             await conn.find(request, self.add_finder)
 
+                        elif request["type"] == "stop_find":
+                            self.validate(request, [])
+                            await conn.stop_finding(request, self.del_finder)
                         else:
                             await conn.send_err("request", "Unknown type")
                     except json.JSONDecodeError:

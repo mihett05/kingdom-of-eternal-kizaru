@@ -2,10 +2,10 @@ import pygame
 import pygame_gui
 from client.Scene import Scene
 from client.Interface import Interface
-from client.Map import Map
 from client.Char import Char
 from client.AppData import AppData
 from client.MapManager import MapManager
+from client.AudioManager import AudioManager
 
 
 class GameScene(Scene):
@@ -15,7 +15,17 @@ class GameScene(Scene):
         self.interface = None
         self.map_manager = MapManager()
         self.char = None
+        self.audio = AudioManager()
+        self.audio.add_track("data/music/iraq.mp3")
+        #self.audio.play("data/music/yvnkxx_kapkan.mp3")
         self.start()
+
+        @self.api.on("find")
+        def found(data):
+            if data["status"] == "ok":
+                print("battle")
+            else:
+                print("Network error")
 
     def start(self):
         self.interface = Interface()

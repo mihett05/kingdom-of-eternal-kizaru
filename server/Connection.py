@@ -38,6 +38,13 @@ class Connection:
         await self.response(response_type, {"desc": desc}, is_ok=False)
 
     def close(self):
+        if self.battle is not None:
+            self.battle.leave(self)
+        self.user = None
+        self.char = None
+        self.is_finding = False
+        self.in_fight = False
+        self.battle = None
         self.session.close()
         self.conn.close()
 
@@ -205,7 +212,7 @@ class Connection:
     async def find(self, request, add_finder):
         if self.user is not None and self.char is not None and not self.is_finding and not self.in_fight:
             self.is_finding = True
-            add_finder(self)
+            await add_finder(self)
         else:
             await self.send_err("find", "You didn't login in account")
 
@@ -216,15 +223,14 @@ class Connection:
         else:
             await self.send_err("find", "You didn't login in account")
 
-    async def fight(self, battle):
+    async def fight(self, battle, enemy):
         self.in_fight = True
         self.battle = battle
         await self.response("find", {
             "enemy": {
-                "name": self.char.name,
-                "class_name": self.char.class_name,
-                "race": self.char.race,
-                "rank": self.char.rank
+                "name": enemy.char.name,
+                "class_name": enemy.char.class_name,
+                "rank": enemy.char.rank
             }
         })
 

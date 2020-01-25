@@ -20,6 +20,8 @@ class Inventory(pygame_gui.core.UIWindow):
         )
         self.close_button = None
         self.title_label = None
+        self.quit_button = None
+        self.find_battle_button = None
 
         self.nick_label = None
         self.class_label = None
@@ -186,9 +188,17 @@ class Inventory(pygame_gui.core.UIWindow):
             parent_element=self
         )
 
-        self.user_id_label = pygame_gui.elements.UILabel(
+        self.find_battle_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 360, 300, 25),
-            text="UserId: 1",
+            text="Найти битву",
+            manager=self.data["ui"],
+            container=self.get_container(),
+            parent_element=self
+        )
+
+        self.quit_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 400, 300, 25),
+            text="Выйти из игры",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
@@ -225,6 +235,10 @@ class Inventory(pygame_gui.core.UIWindow):
             if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.close_button:
                     self.kill()
-            if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                elif event.ui_element == self.quit_button:
+                    self.data["close"]()
+                elif event.ui_element == self.find_battle_button:
+                    self.data["api"].find()
+            elif event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                 print(event.text)  # TO-DO
 

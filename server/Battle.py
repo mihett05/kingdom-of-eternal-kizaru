@@ -1,4 +1,5 @@
 import random
+import threading
 from server.models import Skill
 from server.Connection import Connection
 
@@ -34,9 +35,14 @@ class Battle:
                 enemy["health"] -= enemy["conn"].get_damage(damage)
                 if enemy["health"] <= 0:
                     if callable(self.end_callback):
-                        self.end_callback(player["conn"], enemy["conn"])
+                        self.end_callback(player["conn"], enemy["conn"], self)
             else:
                 return "Not enough power"
         else:
             return "Not your step"
 
+    def leave(self, conn: Connection):
+        enemy = self.player1["conn"] if conn == self.player2["conn"] else self.player2["conn"]\
+            if conn == self.player1["conn"] else None
+        if enemy is not None:
+            self.end_callback(enemy, conn, self)

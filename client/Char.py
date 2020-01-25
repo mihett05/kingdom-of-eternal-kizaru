@@ -9,7 +9,8 @@ class Char:
     def __init__(self):
         self.group = pygame.sprite.Group()
         self.data = AppData()
-        self.default_speed = math.ceil(self.data["screen"].get_width() / 400)
+        self.default_x_speed = math.ceil(self.data["screen"].get_width() / 300)
+        self.default_y_speed = math.ceil(self.data["screen"].get_height() / 200)
         scale = (
                 (self.data["screen"].get_width() // 25) // 4 * 3,
                 (self.data["screen"].get_height() // 14) // 4 * 3
@@ -84,44 +85,44 @@ class Char:
             self.side = "up"
             if self.moving_check_for_ability(pygame.Rect(
                 self.x,
-                self.y - self.default_speed,
+                self.y - self.default_y_speed,
                 self.sprite.rect.w,
                 self.sprite.rect.h
             )):
-                self.y -= self.default_speed  # Fuck pygame(говно) преобразует все значения в int
+                self.y -= self.default_y_speed  # Fuck pygame(говно) преобразует все значения в int
                 self.can_go_next = True
 
         if keys[pygame.K_s]:
             self.side = "down"
             if self.moving_check_for_ability(pygame.Rect(
                     self.x,
-                    self.y + self.default_speed,
+                    self.y + self.default_y_speed,
                     self.sprite.rect.w,
                     self.sprite.rect.h
             )):
-                self.y += self.default_speed
+                self.y += self.default_y_speed
                 self.can_go_next = True
 
         if keys[pygame.K_a]:
             self.side = "left"
             if self.moving_check_for_ability(pygame.Rect(
-                    self.x - self.default_speed,
+                    self.x - self.default_x_speed,
                     self.y,
                     self.sprite.rect.w,
                     self.sprite.rect.h
             )):
-                self.x -= self.default_speed  # Следовательно к time привязать не получилось
+                self.x -= self.default_x_speed  # Следовательно к time привязать не получилось
                 self.can_go_next = True
 
         if keys[pygame.K_d]:
             self.side = "right"
             if self.moving_check_for_ability(pygame.Rect(
-                    self.x + self.default_speed,
+                    self.x + self.default_x_speed,
                     self.y,
                     self.sprite.rect.w,
                     self.sprite.rect.h
             )):
-                self.x += self.default_speed
+                self.x += self.default_x_speed
                 self.can_go_next = True
 
         if keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_s] or keys[pygame.K_d]:
