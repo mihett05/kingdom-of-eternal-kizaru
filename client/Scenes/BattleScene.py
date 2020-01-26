@@ -17,16 +17,15 @@ class BattleScene(Scene):
 
         self.char_name_label, self.char_hp_letters_label, self.char_hp_status_label = None, None, None
         self.opponent_name_label, self.opponent_hp_letters_label, self.opponent_hp_status_label = None, None, None
-        self.first_button, self.second_button, self.third_button, self.leave_button = None, None, None, None
+        self.first_action, self.second_action, self.third_action, self.leave_button = None, None, None, None
         self.status_label = None
+        self.status_label_advanced = None
 
         self.name_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 32))
         self.hp_letters_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 22))
         self.opponent_name_font = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 26))
-        self.char = self.account["battle_char"]
-        self.enemy = self.account["battle_enemy"]
-        self.step = self.account["battle_step"]
-        self.opponent_name = self.enemy["name"]
+        self.skills = self.account["battle_skills"]
+        self.opponent_name = self.account["battle_enemy"]["name"]
         self.init_ui()
 
         @self.api.on("result")
@@ -42,15 +41,30 @@ class BattleScene(Scene):
         def battle(data):
             nonlocal self
             if data["status"] == "ok":
-                self.step = data["step"]
-                self.char = {
-                    **self.char,
+                self.account["battle_step"] = data["step"]
+                self.account["battle_char"] = {
+                    **self.account["battle_char"],
                     **data["player"]
                 }
-                self.enemy = {
-                    **self.enemy,
+                self.account["battle_enemy"] = {
+                    **self.account["battle_enemy"],
                     **data["enemy"]
                 }
+                self.draw_data()
+
+        @self.api.on("action")
+        @self.check
+        def action(data):
+            nonlocal self
+            if data["status"] == "ok":
+                self.account["battle_step"] = ""
+            else:
+                if data["desc"] == "data":
+                    self.account["battle_step"] = ""
+                if data["desc"] == "Not enough power":
+                    self.account["battle_status"] = "Не достаточно силы"
+                elif data["desc"] == "Not your step":
+                    self.account["battle_status"] = "Не ваш ход"
 
     @staticmethod
     def load_image_ins(name):
@@ -82,47 +96,55 @@ class BattleScene(Scene):
         self.cover.rect.y = int(self.size[1] / 2.3)
         self.sprites.add(self.cover)
 
-        self.status = None
-
-        self.char_name_label = self.name_font.render(self.account["char"]["name"], False, (31, 55, 41))
-        self.char_hp_letters_label = self.hp_letters_font.render('HP', False, (31, 55, 41))
-        self.char_hp_status_label = self.hp_letters_font.render(f"{self.char['health']}/100", False, (31, 55, 41))
-
-        self.opponent_name_label = self.opponent_name_font.render(self.opponent_name, False, (31, 55, 41))
-        self.opponent_hp_letters_label = self.hp_letters_font.render('HP', False, (31, 55, 41))
-        self.opponent_hp_status_label = self.hp_letters_font.render(f"{self.enemy['health']}/{self.enemy['max_health']}", False, (31, 55, 41))
-
-        self.status_label = self.hp_letters_font.render("Шаг: " + self.step, False, (31, 55, 41))
-
-        self.first_button = self.new_element(pygame_gui.elements.UIButton(
+        self.first_action = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 1.52 - 100, self.size[1] / 1.34, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
-            text="Батон I"
+            text=self.skills[0]["name"]
         ))
-        self.second_button = self.new_element(pygame_gui.elements.UIButton(
+        self.second_action = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 1.22 - 100, self.size[1] / 1.34, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
-            text="Батон II"
+            text=self.skills[1]["name"]
         ))
-        self.third_button = self.new_element(pygame_gui.elements.UIButton(
+        self.third_action = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 1.52 - 100, self.size[1] / 1.17, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
-            text="Батон III"
+            text=self.skills[2]["name"]
         ))
         self.leave_button = self.new_element(pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(self.size[0] / 1.22 - 100, self.size[1] / 1.17, self.size[0] / 8, self.size[1] / 15), manager=self.ui,
             text="Свалить, пока живой"
         ))
 
-    def draw(self):
-        self.sprites.draw(self.screen)
-        self.screen.blit(self.char_name_label, (int(self.size[0]) / 6.3 - len(self.account["char"]["name"]) * int(self.size[0] / 126), int(self.size[1] / 6)))
+    def draw_data(self):
+        self.char_name_label = self.name_font.render(self.account["char"]["name"], False, (31, 55, 41))
+        self.char_hp_letters_label = self.hp_letters_font.render('HP', False, (31, 55, 41))
+        self.char_hp_status_label = self.hp_letters_font.render(f"{self.account['battle_char']['health']}/100", False,
+                                                                (31, 55, 41))
+
+        self.opponent_name_label = self.opponent_name_font.render(self.opponent_name, False, (31, 55, 41))
+        self.opponent_hp_letters_label = self.hp_letters_font.render('HP', False, (31, 55, 41))
+        self.opponent_hp_status_label = self.hp_letters_font.render(
+            f"{self.account['battle_enemy']['health']}/{self.account['battle_enemy']['max_health']}",
+            False, (31, 55, 41))
+
+        self.status_label = self.hp_letters_font.render(f"Шаг: {self.account['battle_step']}", False, (31, 55, 41))
+        self.status_label_advanced = self.hp_letters_font.render(f"Статус: {self.account['battle_status']}", False,
+                                                                 (31, 55, 41))
+
+        self.screen.blit(self.char_name_label, (
+            int(self.size[0]) / 6.3 - len(self.account["char"]["name"]) * int(self.size[0] / 126), int(self.size[1] / 6)))
         self.screen.blit(self.char_hp_letters_label, (int(self.size[0]) / 15.76, int(self.size[1] / 4.7)))
         self.screen.blit(self.char_hp_status_label, (int(self.size[0]) / 9.3, int(self.size[1] / 4.7)))
 
-        self.screen.blit(self.opponent_name_label, (int(self.size[0]) / 1.185 - len(self.opponent_name) * int(self.size[0] / 128), int(self.size[1] / 2.2)))
+        self.screen.blit(self.opponent_name_label, (
+            int(self.size[0]) / 1.185 - len(self.opponent_name) * int(self.size[0] / 128), int(self.size[1] / 2.2)))
         self.screen.blit(self.opponent_hp_letters_label, (int(self.size[0]) / 1.32, int(self.size[1] / 1.99)))
         self.screen.blit(self.opponent_hp_status_label, (int(self.size[0]) / 1.24, int(self.size[1] / 1.99)))
 
         self.screen.blit(self.status_label, (int(self.size[0]) / 10.38, int(self.size[1] / 1.25)))
+        self.screen.blit(self.status_label_advanced, (int(self.size[0]) / 10.38, int(self.size[1]) / 1.20))
 
+    def draw(self):
+        self.sprites.draw(self.screen)
+        self.draw_data()
         for sprite in self.sprites.spritedict.keys():
             sprite.update()
 
@@ -132,3 +154,9 @@ class BattleScene(Scene):
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.leave_button:
                         self.api.battle_leave()
+                    elif event.ui_element == self.first_action:
+                        self.api.action(self.skills[0]["id"])
+                    elif event.ui_element == self.second_action:
+                        self.api.action(self.skills[1]["id"])
+                    elif event.ui_element == self.third_action:
+                        self.api.action(self.skills[2]["id"])

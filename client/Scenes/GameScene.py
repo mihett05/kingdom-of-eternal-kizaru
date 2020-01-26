@@ -26,6 +26,8 @@ class GameScene(Scene):
                 self.account["battle_step"] = data["step"]
                 self.account["battle_enemy"] = data["enemy"]
                 self.account["battle_char"] = data["player"]
+                self.account["battle_skills"] = data["skills"]
+                self.account["battle_status"] = ""
                 self.scene_manager.change("Battle", self.scene_manager.dumps["Battle"])
             else:
                 print("Network error")

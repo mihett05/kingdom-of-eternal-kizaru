@@ -86,7 +86,6 @@ class Server:
                     if not data:
                         if adr in self.logged:
                             self.logged.pop(adr)
-                        print(1)
                         await conn.close()
                         break
                 except OSError:
@@ -157,6 +156,11 @@ class Server:
                         elif request["type"] == "battle_leave":
                             self.validate(request, [])
                             await conn.battle_leave(request)
+
+                        elif request["type"] == "action":
+                            self.validate(request, ["skill_id"])
+                            await conn.action(request)
+
                         else:
                             await conn.send_err("request", "Unknown type")
                     except json.JSONDecodeError:

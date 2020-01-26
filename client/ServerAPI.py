@@ -210,3 +210,8 @@ class ServerAPI:
         
     def battle_leave(self):
         self.request("battle_leave")
+
+    def action(self, skill_id):
+        self.request("action", {
+            "skill_id": skill_id
+        })

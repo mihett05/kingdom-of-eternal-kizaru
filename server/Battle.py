@@ -28,8 +28,10 @@ class Battle:
         if player is None:
             return "Not in battle"
         if (self.step == 0 and player == self.player1) or (self.step == 1 and player == self.player2):
-            self.step = 0 if self.step == 1 else 1
             if player["power"] >= skill.price:
+                self.step = 0 if self.step == 1 else 1
+                player["power"] += 10
+                enemy["power"] += 10
                 player["power"] -= skill.price
                 damage = player["conn"].get_attack_damage(skill)
                 enemy["health"] -= enemy["conn"].get_damage(damage)
@@ -48,6 +50,7 @@ class Battle:
                             "health": enemy["health"]
                         }
                     })
+                return "Data"
 
             else:
                 return "Not enough power"

@@ -226,8 +226,19 @@ class Connection:
         self.is_finding = False
         self.in_fight = True
         self.battle = battle
+        skills = self.session.query(
+            models.Skill.id, models.Skill.name,
+            models.Skill.price, models.Skill.damage).filter_by(
+            class_name=self.char.class_name
+        ).order_by(models.Skill.price).all()
         await self.response("find", {
             "step": battle.__getattribute__("player" + str(battle.step + 1))["conn"].char.name,
+            "skills": list(map(lambda x: {
+                "id": x[0],
+                "name": x[1],
+                "price": x[2],
+                "damage": x[3]
+            }, skills)),
             "enemy": {
                 "name": enemy.char.name,
                 "class_name": enemy.char.class_name,
@@ -237,6 +248,7 @@ class Connection:
                 "max_health": 100
             },
             "player": {
+                "name": self.char.name,
                 "power": 20,
                 "health": 100
             }
@@ -276,15 +288,14 @@ class Connection:
     def get_remains_attack(value: int):
         return (100 + value) / 100
 
+    def get_char_items(self, char_id):
+        return self.session.query(models.Worn.realitem_id).filter_by(owner=char_id).all()
+
     def get_damage(self, damage):
-        for item in [
-            self.get_protect_by_real_item(self.char.head),
-            self.get_protect_by_real_item(self.char.body),
-            self.get_protect_by_real_item(self.char.legs),
-            self.get_protect_by_real_item(self.char.boots),
-            self.get_protect_by_real_item(self.char.weapon)
-        ]:
-            damage *= self.get_remains_protect(item)
+        items = self.get_char_items(self.char.id)
+        if items:
+            for item in list(map(self.get_protect_by_real_item, items)):
+                damage *= self.get_remains_protect(item)
         return damage
 
     def get_attack_damage(self, skill: models.Skill):
@@ -297,15 +308,13 @@ class Connection:
                 bonus = self.char.agility
             elif self.char.class_name == "Маг":
                 bonus = self.char.smart
-            for item in [
-                bonus,
-                self.get_damage_by_real_item(self.char.head),
-                self.get_damage_by_real_item(self.char.body),
-                self.get_damage_by_real_item(self.char.legs),
-                self.get_damage_by_real_item(self.char.boots),
-                self.get_damage_by_real_item(self.char.weapon)
-            ]:
-                damage *= self.get_remains_attack(item)
+            items = self.get_char_items(self.char.id)
+            damage *= self.get_remains_attack(bonus)
+            if items:
+                for item in [
+                    *map(self.get_damage_by_real_item, items)
+                ]:
+                    damage *= self.get_remains_attack(item)
             return damage
         return 0
 
