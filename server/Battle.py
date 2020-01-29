@@ -1,5 +1,4 @@
 import random
-import threading
 from server.models import Skill
 from server.Connection import Connection
 
@@ -46,6 +45,17 @@ class Battle:
                             "health": player["health"]
                         },
                         "enemy": {
+                            "power": enemy["power"],
+                            "health": enemy["health"]
+                        }
+                    })
+                    await enemy["conn"].response("battle", {
+                        "step": self.__getattribute__("player" + str(self.step + 1))["conn"].char.name,
+                        "enemy": {
+                            "power": player["power"],
+                            "health": player["health"]
+                        },
+                        "player": {
                             "power": enemy["power"],
                             "health": enemy["health"]
                         }

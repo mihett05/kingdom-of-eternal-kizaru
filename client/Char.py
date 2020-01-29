@@ -3,6 +3,9 @@ import os
 import math
 from client.AppData import AppData
 from client.AnimatedSprite import AnimatedSprite
+from client.Windows.Store import Store
+from client.Windows.Inventory import Inventory
+from client.MetaSingleton import MetaSingleton
 
 
 class Char:
@@ -52,8 +55,9 @@ class Char:
             return pygame.image.load(os.path.join("data", "default.png")).convert()
 
     def draw(self):
-        self.sprite.update()
-        self.moving()
+        if self.data["windows"].active_window is None:
+            self.sprite.update()
+            self.moving()
         self.group.draw(self.data["screen"])
 
     def moving_check_for_ability(self, new_rect: pygame.rect.RectType) -> bool:
@@ -64,6 +68,12 @@ class Char:
 
     def check_for_teleport(self):
         for sprite in self.data["map_manager"].map.teleports:
+            if sprite.rect.colliderect(self.sprite.rect):
+                return sprite
+        return False
+
+    def check_for_window(self):
+        for sprite in self.data["map_manager"].map.windows:
             if sprite.rect.colliderect(self.sprite.rect):
                 return sprite
         return False
@@ -135,6 +145,15 @@ class Char:
             self.data["map_manager"].set_map(teleport.map_path)
             self.x = self.data["map_manager"].map.spawn_point[0] * self.data["map_manager"].map.width
             self.y = self.data["map_manager"].map.spawn_point[1] * self.data["map_manager"].map.height
+        window = self.check_for_window()
+        if window:
+            self.y += self.data["map_manager"].map.height * 2
+            if window.window_name == "Store":
+                if MetaSingleton._instances.get(Store, None) is None:
+                    self.data["windows"].create(Store)
+            elif window.window_name == "Inventory":
+                if MetaSingleton._instances.get(Inventory, None) is None:
+                    self.data["windows"].create(Inventory)
 
         if self.sprite is not None:
             self.sprite.rect.x = self.x

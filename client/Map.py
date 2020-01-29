@@ -18,6 +18,7 @@ class Map:
         self.blocks = {}
         self.blockers = pygame.sprite.Group()
         self.teleports = pygame.sprite.Group()
+        self.windows = pygame.sprite.Group()
         self.is_active = True
         self.spawn_point = (0, 0)
         self.width = self.data["screen"].get_width() // 25
@@ -45,6 +46,7 @@ class Map:
 
     def load(self):
         teleport = False
+        window = False
         if not os.path.exists("cache"):
             os.makedirs("cache")
         with zipfile.ZipFile(self.path, "r") as archive:
@@ -54,7 +56,6 @@ class Map:
                 self.map = list(map(lambda x: x.strip(), m.readlines()))
             with open(os.path.join(self.cache_path, "view.json"), "r") as v:
                 self.view = json.loads(v.read())
-                self.data["block"] = self.view["block"]
                 for name in self.view["sprites"].values():
                     archive.extract("sprites/" + name, self.cache_path)
                 for key in self.view["sprites"]:
@@ -64,12 +65,19 @@ class Map:
                     if key in self.view["teleports"]:
                         teleport = True
                         groups.append(self.teleports)
+                    if key in self.view["windows"]:
+                        window = True
+                        groups.append(self.windows)
                     self.blocks[key] = SpriteFactory(
                         groups.copy(),
                         self.load_sprite(self.map_name, self.view["sprites"][key], 255)
                     )
                     if teleport:
                         self.blocks[key].set_teleport(self.view["teleports"][key])
+                        teleport = False
+                    if window:
+                        self.blocks[key].set_window(self.view["windows"][key])
+                        window = False
                 self.spawn_point = tuple(self.view["spawn"])
 
     def draw(self):

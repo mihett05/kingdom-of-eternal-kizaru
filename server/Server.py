@@ -103,7 +103,7 @@ class Server:
 
                         elif request["type"] == "logout":
                             if adr in self.logged:
-                                self.logged.pop(adr).close()
+                                await self.logged.pop(adr).close()
 
                         elif request["type"] == "register":
                             self.validate(request, ["login", "password"])

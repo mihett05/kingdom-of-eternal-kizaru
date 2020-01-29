@@ -9,6 +9,7 @@ from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
 from client.SceneManager import SceneManager
+from client.WindowManager import WindowManager
 
 
 class Game:
@@ -29,29 +30,24 @@ class Game:
         pygame.display.set_icon(icon)
         self.sprites = pygame.sprite.Group()
         self.data.set("screen", self.screen)
-
         with open("server.txt", "r") as f:
             text = f.read()
-
         self.loader = Loader(self.screen)
         self.data["loader"] = self.loader
-
         self.api = ServerAPI(text.split(":")[0], int(text.split(":")[1]))
         self.data["api"] = self.api
-
         self.ui = pygame_gui.UIManager((self.screen.get_width(), self.screen.get_height()))
         self.data["ui"] = self.ui
-
         self.clock = pygame.time.Clock()
         self.data["clock"] = self.clock
-
         self.fps = 60
         self.data["fps"] = self.fps
-
         self.scene = SceneManager()
         self.data["scene"] = self.scene
-
         self.data["close"] = self.close
+        self.data["draw"] = self.draw
+        self.data["windows"] = WindowManager()
+
         self.receive_thread = threading.Thread(target=self.api.receive_thread)
         self.broadcast_thread = threading.Thread(target=self.api.broadcast_thread)
 

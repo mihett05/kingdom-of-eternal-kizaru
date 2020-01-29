@@ -1,25 +1,10 @@
 import pygame
 import pygame_gui
-from client.AppData import AppData
+from client.Window import Window
 
 
-class Inventory(pygame_gui.core.UIWindow):
-    _instance = None  # Singleton
-
-    def __new__(cls):
-        if Inventory._instance is None:
-            Inventory._instance = super(Inventory, cls).__new__(cls)
-        return Inventory._instance
-
+class Inventory(Window):
     def __init__(self):
-        self.data = AppData()
-        super().__init__(
-            pygame.Rect(100, 100, self.data["screen"].get_width() - 200, self.data["screen"].get_height() - 200),
-            self.data["ui"],
-            ["inventory"]
-        )
-        self.close_button = None
-        self.title_label = None
         self.quit_button = None
         self.find_battle_button = None
 
@@ -45,29 +30,10 @@ class Inventory(pygame_gui.core.UIWindow):
         self.select_item = None
         self.info = None
 
-        self.init_ui()
+        super().__init__()
 
     def init_ui(self):
-        self.get_container().image = pygame.transform.scale(
-            self.data["load_image"]("window.jpg", 255), self.get_container().rect.size
-        )
-
-        self.close_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(self.get_container().rect.right - 150, 5, 45, 45),
-            text="X",
-            manager=self.data["ui"],
-            container=self.get_container(),
-            parent_element=self
-        )
-
-        self.title_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(15, 15, 300, 25),
-            text="Инвентарь",
-            manager=self.data["ui"],
-            container=self.get_container(),
-            parent_element=self
-        )
-
+        super().init_ui()
         self.nick_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(20, 60, 300, 25),
             text="Ник: kizaru228",
@@ -226,19 +192,15 @@ class Inventory(pygame_gui.core.UIWindow):
             html_text=""
         )
 
-    def kill(self):
-        super().kill()
-        Inventory._instance = None
-
     def process_event(self, event: pygame.event.Event):
-        if event.type == pygame.USEREVENT:
-            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                if event.ui_element == self.close_button:
-                    self.kill()
-                elif event.ui_element == self.quit_button:
-                    self.data["close"]()
-                elif event.ui_element == self.find_battle_button:
-                    self.data["api"].find()
-            elif event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-                print(event.text)  # TO-DO
+        super().process_event(event)
+        if self.data["scene"].scene.name == "Game":
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.quit_button:
+                        self.data["close"]()
+                    elif event.ui_element == self.find_battle_button:
+                        self.data["api"].find()
+                elif event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                    print(event.text)  # TO-DO
 

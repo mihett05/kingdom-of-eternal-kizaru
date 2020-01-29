@@ -50,7 +50,7 @@ class BattleScene(Scene):
                     **self.account["battle_enemy"],
                     **data["enemy"]
                 }
-                self.draw_data()
+                self.data["draw"]()
 
         @self.api.on("action")
         @self.check

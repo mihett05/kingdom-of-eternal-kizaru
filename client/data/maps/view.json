@@ -1,8 +1,4 @@
 {
-	"block": {
-		"width": 64,
-		"height": 64
-	},
 	"sprites": {
 		"g": "grass.png",
 		"w": "water.png",
@@ -23,9 +19,9 @@
 		"w", "c", "f", "|", "_", "1", "2", "3", "4",
 		"5", "6"
 	],
-	"blocks_teleports": [],
 	"teleports": {
 		"`": "city.zip"
 	},
+	"windows": {},
 	"spawn": [1, 5]
 }

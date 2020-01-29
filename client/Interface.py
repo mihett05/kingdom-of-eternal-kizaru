@@ -35,8 +35,16 @@ class Interface:
         if self.scene_manager.name == "Game":
             if event.type == pygame.USEREVENT:
                 if event.ui_element == self.inventory_button:
-                    if Inventory._instance is None:
-                        Inventory()
+                    if self.data["windows"].active_window is None:
+                        self.data["windows"].create(Inventory)
+                    elif isinstance(self.data["windows"].active_window, Inventory):
+                        self.data["windows"].close()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_i:
+                    if self.data["windows"].active_window is None:
+                        self.data["windows"].create(Inventory)
+                    elif isinstance(self.data["windows"].active_window, Inventory):
+                        self.data["windows"].close()
 
 
 
