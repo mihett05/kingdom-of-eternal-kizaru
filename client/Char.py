@@ -136,7 +136,24 @@ class Char:
                 self.can_go_next = True
 
         if keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_s] or keys[pygame.K_d]:
-            self.update_sprite(self.side + ("_run" if self.can_go_next else ""))
+            if keys[pygame.K_w] and keys[pygame.K_s]:
+                if keys[pygame.K_a] and keys[pygame.K_d]:
+                    self.update_sprite(self.side if self.side is not None else "down")
+                elif keys[pygame.K_a]:
+                    self.update_sprite("left_run")
+                elif keys[pygame.K_d]:
+                    self.update_sprite("right_run")
+                else:
+                    self.update_sprite(self.side if self.side is not None else "down")
+            elif keys[pygame.K_a] and keys[pygame.K_d]:
+                if keys[pygame.K_w]:
+                    self.update_sprite("up_run")
+                elif keys[pygame.K_s]:
+                    self.update_sprite("down_run")
+                else:
+                    self.update_sprite(self.side if self.side is not None else "right")
+            else:
+                self.update_sprite(self.side + ("_run" if self.can_go_next else ""))
         else:
             self.update_sprite(self.side)
 

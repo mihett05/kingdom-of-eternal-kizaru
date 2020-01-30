@@ -45,6 +45,9 @@ class Server:
             if found.is_finding and found.char is not None and found.user is not None:
                 battle = Battle((found, conn), self.end_callback)
                 self.battles.append(battle)
+                if conn in self.finders:
+                    self.finders.remove(conn)
+                self.finders.remove(found)
                 await found.fight(battle, conn)
                 await conn.fight(battle, found)
             else:
@@ -160,6 +163,10 @@ class Server:
                         elif request["type"] == "action":
                             self.validate(request, ["skill_id"])
                             await conn.action(request)
+
+                        elif request["type"] == "get_char_info":
+                            self.validate(request, [])
+                            await conn.get_char_info(request)
 
                         else:
                             await conn.send_err("request", "Unknown type")

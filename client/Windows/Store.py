@@ -6,7 +6,7 @@ from client.Window import Window
 class Store(Window):
     def __init__(self):
         # code
-        super().__init__()
+        super().__init__("DOOM Shop Records")
 
     def init_ui(self):
         super().init_ui()

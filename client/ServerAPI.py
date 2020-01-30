@@ -215,3 +215,6 @@ class ServerAPI:
         self.request("action", {
             "skill_id": skill_id
         })
+
+    def get_char_info(self):
+        self.request("get_char_info")

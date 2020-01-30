@@ -5,8 +5,9 @@ from client.MetaSingleton import MetaSingleton
 
 
 class Window(pygame_gui.core.UIWindow, metaclass=MetaSingleton):
-    def __init__(self):
+    def __init__(self, title: str):
         self.data = AppData()
+        self.__title = title
         super().__init__(
             pygame.Rect(100, 100, self.data["screen"].get_width() - 200, self.data["screen"].get_height() - 200),
             self.data["ui"],
@@ -32,7 +33,7 @@ class Window(pygame_gui.core.UIWindow, metaclass=MetaSingleton):
 
         self.title_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(15, 15, 300, 25),
-            text="Магазин",
+            text=self.__title,
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self

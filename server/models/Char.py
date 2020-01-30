@@ -15,9 +15,9 @@ class Char(Base):
     balance = Column(Integer, default=0)
     class_name = Column(String, nullable=False)
     race = Column(String, nullable=False)
-    strength = Column(Integer, default=1)
-    agility = Column(Integer, default=1)
-    smart = Column(Integer, default=1)
+    strength = Column(Integer, default=0)
+    agility = Column(Integer, default=0)
+    smart = Column(Integer, default=0)
 
     def __init__(self, name, lvl, rank, user_id, balance, class_name, race, strength, agility, smart):
         self.name = name
@@ -30,12 +30,6 @@ class Char(Base):
         self.strength = strength
         self.agility = agility
         self.smart = smart
-
-        self.head = 0
-        self.body = 0
-        self.legs = 0
-        self.boots = 0
-        self.weapon = 0
 
     def __repr__(self):
         return f"Char({self.name}, {self.lvl}, {self.rank}, {self.user_id})"

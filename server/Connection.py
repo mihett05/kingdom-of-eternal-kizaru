@@ -208,8 +208,11 @@ class Connection:
     async def find(self, request, add_finder):
         if self.user is not None and self.char is not None:
             if not self.is_finding and not self.in_fight:
-                self.is_finding = True
-                await add_finder(self)
+                if self.char.balance >= 10:
+                    self.is_finding = True
+                    await add_finder(self)
+                else:
+                    await self.send_err("find", "You")
             else:
                 await self.send_err("find", "You already in finding or in battle")
         else:
@@ -311,9 +314,7 @@ class Connection:
             items = self.get_char_items(self.char.id)
             damage *= self.get_remains_attack(bonus)
             if items:
-                for item in [
-                    *map(self.get_damage_by_real_item, items)
-                ]:
+                for item in map(self.get_damage_by_real_item, items):
                     damage *= self.get_remains_attack(item)
             return damage
         return 0
@@ -343,4 +344,39 @@ class Connection:
         if self.battle is not None:
             await self.battle.leave(self)
         await self.response("battle_leave")
+
+    async def get_char_info(self, request):
+        if self.user is not None and self.char is not None:
+            items = self.session.query(models.Worn.realitem_id).filter_by(owner=self.char.id).all()
+            slot1 = None
+            slot2 = None
+            if items:
+                slot1 = self.session.query(models.RealItem.item_id).filter_by(id=items[0]).first()
+                if slot1:
+                    slot1 = self.session.query(models.Item.name).filter_by(id=slot1).first()
+                if len(items) > 1:
+                    slot2 = self.session.query(models.RealItem.item_id).filter_by(id=items[1]).first()
+                    if slot2:
+                        slot2 = self.session.query(models.Item.name).filter_by(id=slot2).first()
+            await self.response("get_char_info", {
+                "char": {
+                    "rank": self.char.rank,
+                    "balance": self.char.balance,
+                    "strength": self.char.class_name,
+                    "agility": self.char.agility,
+                    "smart": self.char.smart,
+                    "slot1": {
+                        "id": items[0] if slot1 else -1,
+                        "name": slot1 if slot1 else ""
+                    },
+                    "slot2": {
+                        "id": items[1] if slot2 else -1,
+                        "name": slot2 if slot2 else ""
+                    },
+                    "protect": self.get_damage(100) - 100,
+                    "attack": self.get_attack_damage(models.Skill("test", 0, 1, self.char.class_name)) - 1
+                }
+            })
+        else:
+            await self.send_err("get_char_info", "You didn't login in account")
 

@@ -29,14 +29,16 @@ class Inventory(Window):
 
         self.select_item = None
         self.info = None
+        self.status_bar = None
 
-        super().__init__()
+        super().__init__("Инвентарь")
 
     def init_ui(self):
         super().init_ui()
+        self.data["api"].get_char_info()
         self.nick_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(20, 60, 300, 25),
-            text="Ник: kizaru228",
+            text="Ник: " + self.data["account"]["char"]["name"],
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
@@ -44,55 +46,47 @@ class Inventory(Window):
 
         self.class_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(20, 100, 300, 25),
-            text="Класс: Вор в законе",
-            manager=self.data["ui"],
-            container=self.get_container(),
-            parent_element=self
-        )
-
-        self.race_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 140, 300, 25),
-            text="Раса: Нигер",
+            text="Класс: " + self.data["account"]["char"]["class"],
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
         )
 
         self.rank_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 180, 300, 25),
-            text="Ранг: 228",
+            relative_rect=pygame.Rect(20, 140, 300, 25),
+            text="Ранг: " + str(self.data["account"]["char"]["rank"]),
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
         )
 
         self.balance_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 240, 300, 25),
-            text="Баланс: 228 руб.",
+            relative_rect=pygame.Rect(20, 180, 300, 25),
+            text=f"Баланс: {self.data['account']['char']['balance']} руб.",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
         )
 
         self.strength_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 280, 300, 25),
-            text="Сила: 0/100",
+            relative_rect=pygame.Rect(20, 240, 300, 25),
+            text=f"Сила: {self.data['account']['char']['strength']}/100",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
         )
 
         self.agility_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 320, 300, 25),
-            text="Ловкость: 100/100",
+            relative_rect=pygame.Rect(20, 280, 300, 25),
+            text=f"Ловкость: {self.data['account']['char']['agility']}/100",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
         )
 
         self.smart_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(20, 360, 300, 25),
-            text="Интеллект: 0/100",
+            relative_rect=pygame.Rect(20, 320, 300, 25),
+            text=f"Интеллект: {self.data['account']['char']['smart']}/100",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
@@ -100,7 +94,7 @@ class Inventory(Window):
 
         self.head_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 60, 300, 25),
-            text="Шлем: ",
+            text="Броня: ",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
@@ -108,30 +102,6 @@ class Inventory(Window):
 
         self.body_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 100, 300, 25),
-            text="Броня: ",
-            manager=self.data["ui"],
-            container=self.get_container(),
-            parent_element=self
-        )
-
-        self.legs_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 140, 300, 25),
-            text="Ноги: ",
-            manager=self.data["ui"],
-            container=self.get_container(),
-            parent_element=self
-        )
-
-        self.boots_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 180, 300, 25),
-            text="Обувь: ",
-            manager=self.data["ui"],
-            container=self.get_container(),
-            parent_element=self
-        )
-
-        self.weapon_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 240, 300, 25),
             text="Оружие: ",
             manager=self.data["ui"],
             container=self.get_container(),
@@ -140,7 +110,7 @@ class Inventory(Window):
 
         self.protect_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 280, 300, 25),
-            text="Защита: 0%",
+            text=f"Защита: {int(self.data['account']['char']['protect'])}%",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
@@ -148,7 +118,7 @@ class Inventory(Window):
 
         self.damage_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 320, 300, 25),
-            text="Урон: 0%",
+            text=f"Урон: {int(self.data['account']['char']['attack'])}%",
             manager=self.data["ui"],
             container=self.get_container(),
             parent_element=self
@@ -190,6 +160,17 @@ class Inventory(Window):
             container=self.get_container(),
             parent_element=self,
             html_text=""
+        )
+
+        self.status_bar = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(
+                5, self.get_container().rect.size[1] - 24 - 4,
+                self.get_container().rect.w - 10, 24
+            ),
+            manager=self.data["ui"],
+            container=self.get_container(),
+            parent_element=self,
+            text="Статус: " + self.data["account"]["status"]
         )
 
     def process_event(self, event: pygame.event.Event):
