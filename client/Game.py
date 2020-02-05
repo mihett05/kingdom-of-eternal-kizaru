@@ -1,22 +1,26 @@
 import os
+import sys
+import threading
 import pygame
 import pygame_gui
-import threading
+from time import sleep
 from client.Scenes import LoginScene
 from client.ServerAPI import ServerAPI
 from client.Loader import Loader
 from client.AppData import AppData
 from client.SceneManager import SceneManager
+from client.WindowManager import WindowManager
 
 
 class Game:
     def __init__(self):
         pygame.init()
+        self.running = True
         self.data = AppData()
 
         self.data["load_image"] = self.load_image
         self.data["account"] = dict()
-        self.isfullscreen = True
+        self.isfullscreen = False
         if self.isfullscreen:
             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
@@ -26,27 +30,26 @@ class Game:
         pygame.display.set_icon(icon)
         self.sprites = pygame.sprite.Group()
         self.data.set("screen", self.screen)
-
         with open("server.txt", "r") as f:
             text = f.read()
-
         self.loader = Loader(self.screen)
         self.data["loader"] = self.loader
-
         self.api = ServerAPI(text.split(":")[0], int(text.split(":")[1]))
         self.data["api"] = self.api
-
         self.ui = pygame_gui.UIManager((self.screen.get_width(), self.screen.get_height()))
         self.data["ui"] = self.ui
-
         self.clock = pygame.time.Clock()
         self.data["clock"] = self.clock
-
         self.fps = 60
         self.data["fps"] = self.fps
-
         self.scene = SceneManager()
         self.data["scene"] = self.scene
+        self.data["close"] = self.close
+        self.data["draw"] = self.draw
+        self.data["windows"] = WindowManager()
+
+        self.receive_thread = threading.Thread(target=self.api.receive_thread)
+        self.broadcast_thread = threading.Thread(target=self.api.broadcast_thread)
 
     @staticmethod
     def load_image(name, color_key=None):
@@ -62,6 +65,16 @@ class Game:
             print("Can't load image data/{}".format(name))
             return pygame.image.load(os.path.join("data", "default.png")).convert()
 
+    def close(self):
+        pygame.quit()
+        self.api.logout()
+        sleep(0.25)
+        self.api.close()
+        self.receive_thread.join()
+        self.broadcast_thread.join()
+        self.running = False
+        sys.exit(0)
+
     def draw(self):
         if self.screen is not None:
             self.screen.fill((0, 0, 0))
@@ -75,18 +88,17 @@ class Game:
             pygame.display.flip()
 
     def run(self):
-        #self.api.connect()
-        threading.Thread(target=self.api.receive_thread).start()
-        threading.Thread(target=self.api.broadcast_thread).start()
-        run = True
+        self.api.connect()
+        self.receive_thread.start()
+        self.broadcast_thread.start()
         self.scene.change("login", LoginScene)
-        while run:
+        while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
+                    self.running = False
                 elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                     if event.key == pygame.K_F4:
-                        run = False
+                        self.running = False
                 self.ui.process_events(event)
                 self.scene.scene.process_events(event)
             self.draw()
@@ -95,7 +107,5 @@ class Game:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
-        #self.api.logout()
-        #self.api.close()
-        pygame.quit()
+        self.close()
 

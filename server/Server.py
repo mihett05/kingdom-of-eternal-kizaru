@@ -15,7 +15,7 @@ class Server:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(self.address)
-        self.socket.listen(10)
+        self.socket.listen(16)
         self.socket.setblocking(False)
         self.engine = create_engine("sqlite:///db.db")
         models.User.metadata.create_all(self.engine)
@@ -23,9 +23,11 @@ class Server:
         models.Item.metadata.create_all(self.engine)
         models.RealItem.metadata.create_all(self.engine)
         models.Skill.metadata.create_all(self.engine)
+        models.Worn.metadata.create_all(self.engine)
         self.logged = dict()
         self.loop = None
         self.finders = set()
+        self.battles = list()
 
     @staticmethod
     def validate(request, need_keys, fatal=True):
@@ -37,22 +39,30 @@ class Server:
                     return False
         return True
 
-    def add_finder(self, conn: Connection):
+    async def add_finder(self, conn: Connection):
         if len(self.finders) > 0:
             found = min(self.finders, key=lambda x: abs(x.char.rank - conn.char.rank))
             if found.is_finding and found.char is not None and found.user is not None:
                 battle = Battle((found, conn), self.end_callback)
-                asyncio.run_coroutine_threadsafe(found.fight(battle), self.loop)
-                asyncio.run_coroutine_threadsafe(conn.fight(battle), self.loop)
+                self.battles.append(battle)
+                if conn in self.finders:
+                    self.finders.remove(conn)
+                self.finders.remove(found)
+                await found.fight(battle, conn)
+                await conn.fight(battle, found)
             else:
                 self.finders.remove(found)
-                self.add_finder(conn)
+                await self.add_finder(conn)
         else:
             self.finders.add(conn)
 
-    def end_callback(self, winner: Connection, looser: Connection):
-        asyncio.run_coroutine_threadsafe(winner.win(), self.loop)
-        asyncio.run_coroutine_threadsafe(looser.loose(), self.loop)
+    async def end_callback(self, winner: Connection, looser: Connection, battle: Battle):
+        print(winner.char, looser.char)
+        if winner is not None:
+            await winner.win()
+        if looser is not None:
+            await looser.loose()
+        self.battles.remove(battle)
 
     async def del_finder(self, conn: Connection):
         if conn in self.finders:
@@ -66,17 +76,25 @@ class Server:
         """
         try:
             conn = Connection(sock, adr, self.loop, sessionmaker(bind=self.engine))
+            try:
+                if adr in self.logged:
+                    old_conn = self.logged.pop(adr)
+                    if isinstance(old_conn, socket.socket):
+                        await old_conn.close()
+            except OSError:
+                pass
             while True:
                 try:
                     data = await self.loop.sock_recv(conn.conn, 4096)
                     if not data:
                         if adr in self.logged:
                             self.logged.pop(adr)
-                        conn.close()
+                        await conn.close()
                         break
                 except OSError:
                     if adr in self.logged:
                         self.logged.pop(adr)
+                    break
                 else:
                     try:
                         request = json.loads(data.decode("utf-8"))
@@ -88,7 +106,7 @@ class Server:
 
                         elif request["type"] == "logout":
                             if adr in self.logged:
-                                self.logged.pop(adr).close()
+                                await self.logged.pop(adr).close()
 
                         elif request["type"] == "register":
                             self.validate(request, ["login", "password"])
@@ -105,6 +123,10 @@ class Server:
                         elif request["type"] == "create_char":
                             self.validate(request, ["name", "race", "class_name"])
                             await conn.create_char(request)
+
+                        elif request["type"] == "delete_char":
+                            self.validate(request, ["id"])
+                            await conn.delete_char(request)
 
                         elif request["type"] == "get_inventory":
                             self.validate(request, [])
@@ -129,6 +151,22 @@ class Server:
                         elif request["type"] == "find":
                             self.validate(request, [])
                             await conn.find(request, self.add_finder)
+
+                        elif request["type"] == "stop_find":
+                            self.validate(request, [])
+                            await conn.stop_finding(request, self.del_finder)
+
+                        elif request["type"] == "battle_leave":
+                            self.validate(request, [])
+                            await conn.battle_leave(request)
+
+                        elif request["type"] == "action":
+                            self.validate(request, ["skill_id"])
+                            await conn.action(request)
+
+                        elif request["type"] == "get_char_info":
+                            self.validate(request, [])
+                            await conn.get_char_info(request)
 
                         else:
                             await conn.send_err("request", "Unknown type")

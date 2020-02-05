@@ -17,6 +17,17 @@ class CharMakerScene(Scene):
         self.status = None
         self.init_ui()
 
+        @self.api.on("create_char")
+        @self.check
+        def create_char(data):
+            nonlocal self
+            if data["status"] == "ok":
+                self.account["chars"] = list(map(self.api.char_data_convert, data["chars"]))
+                self.account["chosen_char_id"] = None
+                self.scene_manager.change("CharsScene", self.scene_manager.last)
+            else:
+                self.set_result("Имя занято")
+
     @staticmethod
     def load_image_ins(name):
         try:
@@ -98,18 +109,8 @@ class CharMakerScene(Scene):
                         elif self.chosen_class is None:
                             self.set_result('Выберите класс')
                         else:
-                            # Создание перса здесь. Все данные ниже.
-                            self.account["chars"].append({'id': self.account["chosen_char_id"],
-                                                          'name': self.char_name.text,
-                                                          'class': self.chosen_class,
-                                                          'rank': 0,
-                                                          'blacklist': 0,
-                                                          'money': 0})
-                            # Далее не удалять.
-                            self.account["chosen_char_id"] = None
-                            self.scene_manager.change("CharsScene", self.scene_manager.last)
-                    if event.ui_element == self.back_button:
-                        self.scene_manager.change("CharsScene", self.scene_manager.last)
+                            self.api.create_char(self.char_name.text, self.chosen_class)
+                    elif event.ui_element == self.back_button:
+                        self.scene_manager.change("CharsScene", self.scene_manager.dumps["CharsScene"])
                     elif event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                        self.data["close"]()

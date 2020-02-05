@@ -17,10 +17,21 @@ class CharDeleteScene(Scene):
         self.account_font = pygame.font.Font('data/AtariRevue.ttf', 26)
         self.mainfont = pygame.font.Font('data/AtariRevue.ttf', int(self.size[0] / 26.3))
         char_id = self.account["chosen_char_id"]
-        if char_id < len(self.account["chars"]):
+        if char_id is not None and char_id < len(self.account["chars"]):
             self.char = self.account["chars"][char_id]
             self.char_inlist_place = char_id
         self.init_ui()
+
+        @self.api.on("delete_char")
+        @self.check
+        def delete_char(data):
+            nonlocal self
+            if data["status"] == "ok":
+                self.account["chars"] = list(map(self.api.char_data_convert, data["chars"]))
+                self.account["chosen_char_id"] = None
+                self.scene_manager.change("CharsScene", self.scene_manager.last)
+            else:
+                print("Deleting char error")
 
     @staticmethod
     def load_image_ins(name):
@@ -66,7 +77,4 @@ class CharDeleteScene(Scene):
                     if event.ui_element == self.cancel_button:
                         self.scene_manager.change("CharsScene", self.scene_manager.last)
                     elif event.ui_element == self.ok_button:
-                        # Удаление перса здесь. Номар перса в self.account["chosen_char_id"]. Инфа о персе в self.char
-                        del self.account["chars"][self.char_inlist_place]  # Для проверки.
-                        self.account["chosen_char_id"] = None
-                        self.scene_manager.change("CharsScene", self.scene_manager.last)
+                        self.api.delete_char(self.char["id"])

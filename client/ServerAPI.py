@@ -9,6 +9,7 @@ class ServerAPI:
         self.port = port
         self.connected = False
         self._listeners = {}
+        self._one_time_listeners = {}
         self._requests_queue = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -32,25 +33,32 @@ class ServerAPI:
         """
         Thread with receiving data from server
         """
-        while self.connected:
-            data = self.socket.recv(4096)
-            try:
-                response = json.loads(data.decode("utf-8"))
-                response_type = response["type"]
-                if response_type in self._listeners:
-                    for callback in self._listeners[response_type]:
-                        callback(response)
-            except json.JSONDecodeError:
-                pass
+        try:
+            while self.connected:
+                data = self.socket.recv(4096)
+                try:
+                    response = json.loads(data.decode("utf-8"))
+                    print(response)
+                    response_type = response["type"]
+                    if response_type in self._listeners:
+                        for callback in self._listeners[response_type]:
+                            callback(response)
+                except json.JSONDecodeError:
+                    pass
+        except ConnectionAbortedError as e:
+            print(e)
 
     def broadcast_thread(self):
         """
         Thread with sending data to server
         """
-        while self.connected:
-            if len(self._requests_queue) > 0:
-                request = self._requests_queue.pop(0)
-                self.socket.send(request.encode("utf-8"))
+        try:
+            while self.connected:
+                if len(self._requests_queue) > 0:
+                    request = self._requests_queue.pop(0)
+                    self.socket.send(request.encode("utf-8"))
+        except OSError as e:
+            print(e)
 
     def on(self, resp_type):
         """
@@ -126,7 +134,7 @@ class ServerAPI:
             "password": password
         })
 
-    def create_char(self, name, class_name, race):
+    def create_char(self, name, class_name, race=""):
         """
         Create new char
         :param name: name of new char
@@ -137,6 +145,11 @@ class ServerAPI:
             "name": name,
             "class_name": class_name,
             "race": race
+        })
+
+    def delete_char(self, char_id):
+        self.request("delete_char", {
+            "id": char_id
         })
 
     def get_inventory(self):
@@ -182,3 +195,26 @@ class ServerAPI:
             "real_item_id": real_item_id,
             "slot_name": slot_name
         })
+
+    @staticmethod
+    def char_data_convert(char_server_data):
+        return dict(zip(
+            ("id", "name", "class", "rank", "money", "blacklist"), (*char_server_data, 0, 0)
+        ))
+
+    def find(self):
+        self.request("find")
+
+    def stop_find(self):
+        self.request("stop_find")
+        
+    def battle_leave(self):
+        self.request("battle_leave")
+
+    def action(self, skill_id):
+        self.request("action", {
+            "skill_id": skill_id
+        })
+
+    def get_char_info(self):
+        self.request("get_char_info")

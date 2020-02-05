@@ -197,8 +197,7 @@ class CharsScene(Scene):
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                        self.data["close"]()
                     elif event.ui_element == self.back_button:
                         self.scene_manager.change("MainMenu", self.scene_manager.dumps["MainMenu"])
                     elif event.ui_element == self.first_char_delete_button:
@@ -220,13 +219,19 @@ class CharsScene(Scene):
                         self.account["chosen_char_id"] = 2
                         self.scene_manager.change("CharMaker", CharMakerScene)
                     elif event.ui_element == self.first_char_play_button:
-                        self.account["chosen_char_id"] = 0  # TO-DO API
+                        self.account["chosen_char_id"] = 0
+                        self.api.play(self.account["chars"][0]["id"])
+                        self.account["char"] = self.account["chars"][0]
                         self.scene_manager.change("Game", GameScene)
 
                     elif event.ui_element == self.second_char_play_button:
-                        self.account["chosen_char_id"] = 1  # TO-DO API
+                        self.account["chosen_char_id"] = 1
+                        self.api.play(self.account["chars"][1]["id"])
+                        self.account["char"] = self.account["chars"][1]
                         self.scene_manager.change("Game", GameScene)
                     elif event.ui_element == self.third_char_play_button:
-                        self.account["chosen_char_id"] = 2  # TO-DO API
+                        self.account["chosen_char_id"] = 2
+                        self.api.play(self.account["chars"][2]["id"])
+                        self.account["char"] = self.account["chars"][2]
                         self.scene_manager.change("Game", GameScene)
 

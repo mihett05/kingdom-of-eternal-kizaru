@@ -1,8 +1,4 @@
 {
-	"block": {
-		"width": 64,
-		"height": 64
-	},
 	"sprites": {
 		"g": "grass.png",
 		"w": "water.png",
@@ -18,11 +14,13 @@
 		"`": "road.png"
 	},
 	"blocks_blockers": [
-		"w", "c", "f", "|", "_", "1", "2", "3", "4"
+		"w", "f", "|", "_", "1", "2", "3", "4"
 	],
-	"blocks_teleports": [],
 	"teleports": {
 		"`": "forest.zip"
+	},
+	"windows": {
+		"c": "Store"
 	},
 	"spawn": [1, 6]
 }

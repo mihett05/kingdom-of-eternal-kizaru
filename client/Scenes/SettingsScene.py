@@ -59,7 +59,6 @@ class SettingsScene(Scene):
             elif event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.back_button:
-                        self.scene_manager.change("MainMenu", self.scene_manager.dumps["MainMenu"])
+                        self.scene_manager.change("MainMenu", self.scene_manager.last)
                     elif event.ui_element == self.quit_button:
-                        pygame.quit()
-                        sys.exit(0)
+                        self.data["close"]()

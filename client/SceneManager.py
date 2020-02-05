@@ -1,4 +1,5 @@
 from client.AppData import AppData
+from client.Scenes import *
 
 
 class SceneManager:
@@ -16,11 +17,22 @@ class SceneManager:
             self.name = None
             self.proto = None
             self.data = AppData()
-            self.dumps = dict()
+            self.dumps = {
+                "MainMenu": MainMenuScene,
+                "CharsScene": CharsScene,
+                "Settings": SettingsScene,
+                "CharMaker": CharMakerScene,
+                "CharDelete": CharDeleteScene,
+                "Game": GameScene,
+                "Register": RegisterScene,
+                "login": LoginScene,
+                "Battle": BattleScene
+            }
             self.ui = self.data["ui"]
             self.queue = []
             self.scene = None
             self.last = None
+            self.game_scene = None
 
     def change(self, name, proto, make_dump=False):
         if make_dump:
@@ -29,6 +41,13 @@ class SceneManager:
         self.last = self.proto
         self.proto = proto
         self.ui.clear_and_reset()
-        if self.scene is not None:
+        if self.scene is not None and not isinstance(self.scene, GameScene):
             self.scene.clear()
-        self.scene = proto()
+        if proto is GameScene and self.game_scene is not None:
+            self.scene = self.game_scene
+            self.scene.resume()
+        else:
+            self.scene = proto()
+            if isinstance(self.scene, GameScene):
+                self.game_scene = self.scene
+        self.scene.name = name
