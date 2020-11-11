@@ -107,5 +107,6 @@ class Game:
                 self.ui.update(self.clock.tick() / 1000)
             except BaseException:
                 pass
+        pygame.time.delay(40)
         self.close()
 

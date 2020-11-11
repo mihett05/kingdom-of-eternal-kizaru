@@ -18,11 +18,8 @@ class Inventory(Window):
         self.smart_label = None
         self.user_id_label = None
 
-        self.head_label = None
-        self.body_label = None
-        self.legs_label = None
-        self.boots_label = None
-        self.weapon_label = None
+        self.select_armor = None
+        self.select_weapon = None
 
         self.protect_label = None
         self.damage_label = None
@@ -36,6 +33,7 @@ class Inventory(Window):
     def init_ui(self):
         super().init_ui()
         self.data["api"].get_char_info()
+
         self.nick_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(20, 60, 300, 25),
             text="Ник: " + self.data["account"]["char"]["name"],
@@ -92,7 +90,7 @@ class Inventory(Window):
             parent_element=self
         )
 
-        self.head_label = pygame_gui.elements.UILabel(
+        self.select_armor = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 60, 300, 25),
             text="Броня: ",
             manager=self.data["ui"],
@@ -100,7 +98,21 @@ class Inventory(Window):
             parent_element=self
         )
 
-        self.body_label = pygame_gui.elements.UILabel(
+        self.select_weapon = pygame_gui.elements.UIDropDownMenu(
+            list(map(lambda x: x["name"], self.data["account"]["inventory"])),
+            "Предмет",
+            manager=self.data["ui"],
+            container=self.get_container(),
+            parent_element=self,
+            relative_rect=pygame.Rect(
+                self.get_container().rect.size[0] // 2 - 100,
+                60,
+                200,
+                30
+            )
+        )
+
+        self.select_weapon = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(self.get_container().rect.size[0] - 320, 100, 300, 25),
             text="Оружие: ",
             manager=self.data["ui"],
@@ -141,7 +153,7 @@ class Inventory(Window):
         )
 
         self.select_item = pygame_gui.elements.UIDropDownMenu(
-            ["Меч Бомжа", "1", "2", "3"],
+            list(map(lambda x: x["name"], self.data["account"]["inventory"])),
             "Предмет",
             manager=self.data["ui"],
             container=self.get_container(),
@@ -173,6 +185,8 @@ class Inventory(Window):
             text="Статус: " + self.data["account"]["status"]
         )
 
+        self.data["api"].get_inventory()
+
     def process_event(self, event: pygame.event.Event):
         super().process_event(event)
         if self.data["scene"].scene.name == "Game":
@@ -183,5 +197,25 @@ class Inventory(Window):
                     elif event.ui_element == self.find_battle_button:
                         self.data["api"].find()
                 elif event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-                    print(event.text)  # TO-DO
+                    res = list(filter(lambda x: x["name"] == event.text, self.data["account"]["inventory"]))
+                    if len(res) > 0:
+                        item = res[0]
+                        self.info.kill()
+                        text = f"<b>{item['name']}</b><br>" +\
+                               f"<u>Цена: {item['price']}</u><br>" +\
+                               f"Урон: {item['damage']}<br>" +\
+                               f"Защита: {item['protect']}<br>" +\
+                               (f"Сила: +{item['strength']}<br>" if item["strength"] > 0 else "") +\
+                               (f"Ловкость: +{item['agility']}<br>" if item["agility"] > 0 else "") +\
+                               (f"Интеллект: +{item['smart']}<br>" if item["smart"] > 0 else "")
+                        self.info = pygame_gui.elements.UITextBox(
+                            relative_rect=pygame.Rect(
+                                380, 100, self.get_container().rect.size[0] - 320 - 60 - 380, 500
+                            ),
+                            manager=self.data["ui"],
+                            container=self.get_container(),
+                            parent_element=self,
+                            html_text=text
+                        )
+
 

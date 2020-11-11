@@ -1,6 +1,7 @@
 import json
 import socket
 import hashlib
+from time import time
 
 
 class ServerAPI:
@@ -8,9 +9,10 @@ class ServerAPI:
         self.ip = ip
         self.port = port
         self.connected = False
-        self._listeners = {}
-        self._one_time_listeners = {}
+        self._listeners = dict()
+        self._one_time_listeners = dict()
         self._requests_queue = []
+        self.cached = dict()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', 0))
@@ -29,20 +31,23 @@ class ServerAPI:
         self.connected = False
         self.socket.close()
 
+    def __send_to_listener(self, response_type, response):
+        if response_type in self._listeners:
+            for callback in self._listeners[response_type]:
+                callback(response)
+
     def receive_thread(self):
         """
         Thread with receiving data from server
         """
         try:
             while self.connected:
-                data = self.socket.recv(4096)
+                data = self.socket.recv(8192)
                 try:
                     response = json.loads(data.decode("utf-8"))
                     print(response)
                     response_type = response["type"]
-                    if response_type in self._listeners:
-                        for callback in self._listeners[response_type]:
-                            callback(response)
+                    self.__send_to_listener(response_type, response)
                 except json.JSONDecodeError:
                     pass
         except ConnectionAbortedError as e:
@@ -156,7 +161,13 @@ class ServerAPI:
         """
         Get inventory of char in game
         """
-        self.request("get_inventory")
+        if "get_inventory" in self.cached:
+            if time() - self.cached["get_inventory"]["time"] >= 5.0:
+                self.request("get_inventory")
+            else:
+                self.__send_to_listener("get_inventory", self.cached["get_inventory"]["data"])
+        else:
+            self.request("get_inventory")
 
     def get_real_item_by_id(self, real_item_id):
         """
@@ -185,15 +196,15 @@ class ServerAPI:
             "item_id": item_id
         })
 
-    def wear_item(self, real_item_id, slot_name):
+    def wear_item(self, real_item_id, old_real_item_id=-1):
         """
         Set item to slot
         :param real_item_id: id of item in inventory
-        :param slot_name: name of slot (head/body/legs/boots)
         """
         self.request("wear_item", {
             "real_item_id": real_item_id,
-            "slot_name": slot_name
+            "slot_name": "null",
+            "old_real_item_id": old_real_item_id
         })
 
     @staticmethod
@@ -217,4 +228,10 @@ class ServerAPI:
         })
 
     def get_char_info(self):
-        self.request("get_char_info")
+        if "get_char_info" in self.cached:
+            if time() - self.cached["get_char_info"]["time"] >= 5.0:
+                self.request("get_char_info")
+            else:
+                self.__send_to_listener("get_char_info", self.cached["get_char_info"]["data"])
+        else:
+            self.request("get_char_info")

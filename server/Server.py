@@ -85,7 +85,8 @@ class Server:
                 pass
             while True:
                 try:
-                    data = await self.loop.sock_recv(conn.conn, 4096)
+                    data = await self.loop.sock_recv(conn.conn, 8192)
+                    print(data)
                     if not data:
                         if adr in self.logged:
                             self.logged.pop(adr)
@@ -98,7 +99,7 @@ class Server:
                 else:
                     try:
                         request = json.loads(data.decode("utf-8"))
-                        print(request)
+                        #print(request)
                         self.validate(request, ["type"])
                         if request["type"] == "login":
                             self.validate(request, ["login", "password"])
@@ -145,7 +146,7 @@ class Server:
                             await conn.buy_item(request)
 
                         elif request["type"] == "wear_item":
-                            self.validate(request, ["real_item_id", "slot_name"])
+                            self.validate(request, ["real_item_id", "old_real_item_id"])
                             await conn.wear_item(request)
 
                         elif request["type"] == "find":
@@ -170,7 +171,8 @@ class Server:
 
                         else:
                             await conn.send_err("request", "Unknown type")
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
+                        print(e, data.decode("utf-8"))
                         await conn.send_err("request", "Invalid package")
                     except PackageException as e:
                         await conn.send_err("request", e.txt)

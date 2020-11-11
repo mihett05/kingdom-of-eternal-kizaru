@@ -144,8 +144,45 @@ class Connection:
     async def get_inventory(self):
         if self.user is not None and self.char is not None:
             inventory = self.session.query(models.RealItem).filter_by(char_id=self.char.id).all()
+            cached_items = dict()
+
+            def process(real_item):
+                nonlocal self, cached_items
+                item_id = real_item.item_id
+                if item_id not in cached_items:
+                    item = self.session.query(models.Item).filter_by(id=item_id).first()
+                    if item:
+                        json_item = {
+                            "id": real_item.id,
+                            "item_id": item.id,
+                            "name": item.name,
+                            "price": item.price * 0.75,
+                            "damage": item.damage,
+                            "protect": item.protect,
+                            "strength": item.strength,
+                            "agility": item.agility,
+                            "smart": item.smart
+                        }
+                        cached_items = json_item.copy()
+                        return json_item
+                else:
+                    return {
+                        **cached_items[item_id],
+                        "id": real_item.id
+                    }
+                return {
+                    "id": -1,
+                    "item_id": -1,
+                    "name": "",
+                    "price": 0,
+                    "damage": 0,
+                    "protect": 0,
+                    "strength": 0,
+                    "agility": 0,
+                    "smart": 0
+                }
             await self.response("get_inventory", {
-                "inventory": inventory if inventory is not None else []
+                "inventory": list(map(process, inventory)) if inventory else []
             })
         else:
             await self.send_err("get_inventory", "You didn't login in account")
@@ -177,6 +214,7 @@ class Connection:
             item = self.session.query(models.Item).filter_by(id=request["item_id"]).first()
             if item is not None:
                 if item.price <= self.char.balance:
+                    self.char.balance -= item.price
                     self.session.add(models.RealItem(item.id, self.char.id))
                     self.session.commit()
                 else:
@@ -188,18 +226,17 @@ class Connection:
 
     async def wear_item(self, request):
         if self.user is not None and self.char is not None:
-            real_item = self.session.query(models.RealItem).filter_by(id=request["real_item_id"]).first()
+            real_item = self.session.query(models.RealItem).filter_by(
+                id=request["real_item_id"], char_id=self.char.id
+            ).first()
             if real_item is not None:
-                if request["slot_name"] == "head":
-                    self.char.head = real_item.id
-                elif request["slot_name"] == "body":
-                    self.char.body = real_item.id
-                elif request["slot_name"] == "legs":
-                    self.char.legs = real_item.id
-                elif request["slot_name"] == "boots":
-                    self.char.boots = real_item.id
+                item = self.session.query(models.Worn).filter_by(owner=self.char.id,
+                                                                  realitem_id=request["old_real_item_id"]).first()
+                if item:
+                    item.realitem_id = real_item.id
                 else:
-                    await self.send_err("wear_item", "Error with slot_name")
+                    self.session.add(models.Worn(request["real_item_id"], self.char.id))
+                self.session.commit()
             else:
                 await self.send_err("wear_item", "Error with real_item_id")
         else:
@@ -212,7 +249,7 @@ class Connection:
                     self.is_finding = True
                     await add_finder(self)
                 else:
-                    await self.send_err("find", "You")
+                    await self.send_err("find", "You haven't enough money")
             else:
                 await self.send_err("find", "You already in finding or in battle")
         else:
@@ -301,6 +338,32 @@ class Connection:
                 damage *= self.get_remains_protect(item)
         return damage
 
+    def get_bonus_from_item(self, real_item_id):
+        bonus = self.session.query(models.RealItem.item_id).filter_by(id=real_item_id).first()
+        if bonus:
+            bonus = self.session.query(models.Item).filter_by(id=bonus).first()
+            if bonus:
+                if self.char.class_name == "Воин":
+                    return bonus.strength
+                elif self.char.class_name == "Вор в законе":
+                    return bonus.agility
+                elif self.char.class_name == "Маг":
+                    return bonus.smart
+        return 0
+
+    def get_bonus_from_items(self, items):
+        bonus = 0
+        if self.char.class_name == "Воин":
+            bonus = self.char.strength
+        elif self.char.class_name == "Вор в законе":
+            bonus = self.char.agility
+        elif self.char.class_name == "Маг":
+            bonus = self.char.smart
+        bonus_from_items = sum(map(self.get_bonus_from_item, items))
+        if 100 - bonus >= bonus_from_items:
+            return bonus_from_items
+        return 0
+
     def get_attack_damage(self, skill: models.Skill):
         if skill.class_name == self.char.class_name:
             damage = skill.damage
@@ -312,6 +375,7 @@ class Connection:
             elif self.char.class_name == "Маг":
                 bonus = self.char.smart
             items = self.get_char_items(self.char.id)
+            bonus += self.get_bonus_from_items(items)
             damage *= self.get_remains_attack(bonus)
             if items:
                 for item in map(self.get_damage_by_real_item, items):
@@ -362,7 +426,7 @@ class Connection:
                 "char": {
                     "rank": self.char.rank,
                     "balance": self.char.balance,
-                    "strength": self.char.class_name,
+                    "strength": self.char.strength,
                     "agility": self.char.agility,
                     "smart": self.char.smart,
                     "slot1": {

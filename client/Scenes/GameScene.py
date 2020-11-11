@@ -1,5 +1,6 @@
 import pygame
 import pygame_gui
+from time import time
 from client.Scene import Scene
 from client.Interface import Interface
 from client.Char import Char
@@ -12,7 +13,26 @@ class GameScene(Scene):
     def __init__(self):
         Scene.__init__(self)
         self.data = AppData()
-        self.data["account"]["status"] = ""
+        self.account["status"] = ""
+        self.account["inventory"] = []
+        self.account["char"] = {
+            **self.account["char"],
+            "rank": 0,
+            "balance": 0,
+            "strength": 0,
+            "agility": 0,
+            "smart": 0,
+            "slot1": {
+                "id": -1,
+                "name": ""
+            },
+            "slot2": {
+                "id": -1,
+                "name": ""
+            },
+            "protect": 0,
+            "attack": 0
+        }
         self.interface = None
         self.map_manager = MapManager()
         self.char = None
@@ -25,6 +45,21 @@ class GameScene(Scene):
                 self.account["char"] = {
                     **self.account["char"],
                     **data["char"]
+                }
+                self.api.cached["get_char_info"] = {
+                    "time": time(),
+                    "data": data
+                }
+            else:
+                print("Network error")
+
+        @self.api.on("get_inventory")
+        def inventory(data):
+            if data["status"] == "ok":
+                self.account["inventory"] = data["inventory"]
+                self.api.cached["get_inventory"] = {
+                    "time": time(),
+                    "data": data
                 }
             else:
                 print("Network error")
@@ -47,11 +82,12 @@ class GameScene(Scene):
         self.start()
 
     def start(self):
-        self.api.get_char_info()
+        self.data["api"].get_char_info()
         self.interface = Interface()
         self.data["map_manager"] = self.map_manager
         self.map_manager.set_map("forest.zip")
         self.char = Char()
+        self.data["api"].get_inventory()
 
     def draw(self):
         self.map_manager.draw()
